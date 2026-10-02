@@ -1,0 +1,21 @@
+{
+  "name": "404home-server",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "seed": "node seed.js"
+  },
+  "dependencies": {
+    "@koa/cors": "^5.0.0",
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.7.0",
+    "dotenv": "^16.4.7",
+    "jsonwebtoken": "^9.0.2",
+    "koa": "^2.15.3",
+    "koa-bodyparser": "^4.4.1",
+    "koa-router": "^13.0.1"
+  }
+}

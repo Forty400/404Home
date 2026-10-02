@@ -1,0 +1,15 @@
+---
+description: 404Home Vue/Koa stack conventions
+globs: 404home/**/*
+alwaysApply: false
+---
+
+# 404Home Conventions
+
+- Frontend: Vue 3 + Vue Router under `404home/src/`
+- Backend: Koa under `404home/server/`；公共 API 前缀 `/api`
+- DB: SQLite via `server/db.js`；seed 在 `server/seed.js`
+- Tool URLs / hot flags live in DB（admin CRUD），不要在前端写死工具列表
+- Dev: `npm run serve` + `npm run server`；prod: Nginx → `dist` + pm2 `404home-api`
+- Secrets / SSH：只写 `404home/deploy.local.md`（gitignore）；开发阶段禁止自动改 SSH 密码
+- UI：保持现有纸感浅绿风格，避免紫渐变/霓虹暗黑套模板

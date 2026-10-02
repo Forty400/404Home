@@ -5,11 +5,15 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "server": "npm --prefix server start",
+    "dev": "concurrently -n api,web -c green,cyan \"npm run server\" \"npm run serve\""
   },
   "dependencies": {
+    "concurrently": "^10.0.5",
     "core-js": "^3.8.3",
-    "vue": "^3.2.13"
+    "vue": "^3.2.13",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",
@@ -32,7 +36,9 @@
     "parserOptions": {
       "parser": "@babel/eslint-parser"
     },
-    "rules": {}
+    "rules": {
+      "vue/multi-word-component-names": "off"
+    }
   },
   "browserslist": [
     "> 1%",

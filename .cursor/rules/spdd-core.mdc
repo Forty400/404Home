@@ -1,0 +1,16 @@
+---
+description: SPDD core workflow — structured prompts as design contracts
+alwaysApply: true
+---
+
+# SPDD Core
+
+本仓库用 **SPDD** 做 AI 协作。非琐碎改动时：
+
+1. 先查 `docs/spdd/rag/index.md`，需要则 Read 对应 knowledge。
+2. 有活跃画布则按 `docs/spdd/canvases/*.md` 实现；没有则先 `spdd-reasons-canvas`。
+3. 复杂需求先 `spdd-analysis`，再画布，再生成。
+4. 实现后若行为与画布不一致，先 `spdd-sync` 更新画布，再改代码（或按画布改回代码）。
+5. 稳定事实写入 `docs/spdd/rag/knowledge/` 并更新 index。
+
+细则见 `docs/spdd/README.md` 与 `docs/spdd/workflow.md`。

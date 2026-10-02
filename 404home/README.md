@@ -1,93 +1,107 @@
 # 404Home
 
-基于 Vue 3 的前端项目，使用 Vue CLI 搭建。
+AI 工具收录与导航站点。按场景整理写作、图像、视频、办公、编程等常用 AI 工具，并提供资讯/教程与管理后台。
 
-仓库地址：https://github.com/Forty400/404Home
+仓库：https://github.com/Forty400/404Home
 
 ## 技术栈
 
-| 技术 | 版本 / 说明 |
+| 层 | 技术 |
 | --- | --- |
-| Vue | ^3.2.13 |
-| Vue CLI | ~5.0.0 |
-| Babel | @vue/cli-plugin-babel |
-| ESLint | Vue 3 Essential + eslint:recommended |
-| core-js | ^3.8.3（兼容性 polyfill） |
+| 前台 | Vue 3、Vue Router、Vue CLI |
+| 后端 | Koa、koa-router、JWT |
+| 数据库 | SQLite（better-sqlite3） |
 
 ## 环境要求
 
-- Node.js 16+（推荐 LTS）
-- npm 8+（或兼容的包管理器）
+- Node.js 18+（推荐 LTS）
+- npm 8+
 
 ## 快速开始
 
 ```bash
-# 进入项目目录
-cd 404home
-
-# 安装依赖
+# 1. 安装前端依赖（在 404home 目录）
 npm install
 
-# 启动开发服务器（热更新）
+# 2. 安装并启动后端 API
+cd server
+npm install
+npm start
+# API: http://localhost:3001
+
+# 3. 另开终端启动前台
+cd ..
 npm run serve
+# 前台: http://localhost:8080
 ```
 
-浏览器访问终端提示的本地地址（默认 `http://localhost:8080`）。
+也可在根目录一键并行启动（需已分别安装前后端依赖）：
+
+```bash
+npm run dev
+```
+
+## 管理后台
+
+- 地址：http://localhost:8080/admin
+- 默认账号：`admin` / `admin123`（见 `server/.env`，生产环境请修改）
+
+可在后台维护：
+
+- 工具（增删改、热门/最新、启用状态）
+- 分类
+- 资讯与教程
 
 ## 常用命令
 
 | 命令 | 说明 |
 | --- | --- |
-| `npm run serve` | 开发模式编译并热更新 |
-| `npm run build` | 生产环境打包，输出到 `dist/` |
-| `npm run lint` | 检查并修复代码风格问题 |
+| `npm run serve` | 启动前台开发服务器 |
+| `npm run build` | 前台生产构建 |
+| `npm run lint` | 代码检查 |
+| `npm run server` | 启动 Koa API |
+| `npm run dev` | 同时启动前台与 API |
 
 ## 目录结构
 
 ```
 404home/
-├── public/                 # 静态资源（不经 webpack 处理）
-│   ├── favicon.ico
-│   └── index.html          # HTML 模板
+├── public/
 ├── src/
-│   ├── assets/             # 图片等资源
-│   ├── components/         # 可复用组件
-│   │   └── HelloWorld.vue
-│   ├── App.vue             # 根组件
-│   └── main.js             # 应用入口
-├── babel.config.js         # Babel 配置
-├── jsconfig.json           # 路径别名（@ → src）
-├── vue.config.js           # Vue CLI 配置
-├── package.json
-└── README.md
+│   ├── api/              # 接口封装
+│   ├── components/       # 通用组件
+│   ├── layouts/          # 前台/后台布局
+│   ├── router/
+│   ├── views/            # 页面（含 admin）
+│   ├── assets/main.css
+│   ├── App.vue
+│   └── main.js
+├── server/
+│   ├── routes/           # auth / tools / categories / posts / stats
+│   ├── middleware/
+│   ├── data/             # SQLite 数据文件（运行后生成）
+│   ├── db.js
+│   ├── seed.js
+│   ├── index.js
+│   └── .env.example
+├── vue.config.js         # /api 代理到 :3001
+└── package.json
 ```
 
-路径别名：在代码中可使用 `@/` 指向 `src/`，例如：
+## API 概览
 
-```js
-import HelloWorld from '@/components/HelloWorld.vue'
-```
+- `GET /api/categories`、`/api/tools`、`/api/tools/grouped`、`/api/posts`
+- `POST /api/auth/login`
+- 管理接口需 `Authorization: Bearer <token>`
 
-## 配置说明
-
-项目配置集中在 `vue.config.js`，当前启用了 `transpileDependencies`。更多选项见 [Vue CLI 配置参考](https://cli.vuejs.org/zh/config/)。
-
-本地环境变量可使用：
-
-- `.env.local`
-- `.env.*.local`
-
-上述文件已在 `.gitignore` 中忽略，不会提交到仓库。
+开发环境下，前台通过 `vue.config.js` 将 `/api` 代理到后端。
 
 ## 浏览器支持
 
-按 `browserslist` 配置：
-
 - 全球使用率 > 1%
 - 最近 2 个版本
-- 排除已停止维护的浏览器
 - 不支持 IE 11
 
 ## 许可证
 
-Private（私有项目）
+Private

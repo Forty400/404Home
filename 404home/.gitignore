@@ -7,6 +7,14 @@ node_modules
 .env.local
 .env.*.local
 
+# private server / deploy notes
+deploy.local.md
+*.local.md
+!deploy.local.example.md
+.tmp-*.js
+.tmp-ssh-test.js
+.tmp-deploy.js
+
 # Log files
 npm-debug.log*
 yarn-debug.log*
