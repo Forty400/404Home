@@ -1,15 +1,28 @@
-const TOKEN_KEY = '404home_admin_token'
+const ADMIN_TOKEN_KEY = '404home_admin_token'
+const USER_TOKEN_KEY = '404home_user_token'
 
 export function getToken() {
-  return localStorage.getItem(TOKEN_KEY) || ''
+  return localStorage.getItem(ADMIN_TOKEN_KEY) || ''
 }
 
 export function setToken(token) {
-  localStorage.setItem(TOKEN_KEY, token)
+  localStorage.setItem(ADMIN_TOKEN_KEY, token)
 }
 
 export function clearToken() {
-  localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(ADMIN_TOKEN_KEY)
+}
+
+export function getUserToken() {
+  return localStorage.getItem(USER_TOKEN_KEY) || ''
+}
+
+export function setUserToken(token) {
+  localStorage.setItem(USER_TOKEN_KEY, token)
+}
+
+export function clearUserToken() {
+  localStorage.removeItem(USER_TOKEN_KEY)
 }
 
 async function request(path, options = {}) {
@@ -17,7 +30,7 @@ async function request(path, options = {}) {
     'Content-Type': 'application/json',
     ...(options.headers || {})
   }
-  const token = getToken()
+  const token = options.userAuth ? getUserToken() : getToken()
   if (token) headers.Authorization = `Bearer ${token}`
 
   const res = await fetch(`/api${path}`, {
@@ -68,5 +81,34 @@ export const api = {
 
   login: (body) => request('/auth/login', { method: 'POST', body }),
   me: () => request('/auth/me'),
-  getStats: () => request('/stats')
+  getStats: () => request('/stats'),
+
+  getCaptcha: () => request('/user/captcha'),
+  userRegister: (body) => request('/user/register', { method: 'POST', body }),
+  userLogin: (body) => request('/user/login', { method: 'POST', body }),
+  userMe: () => request('/user/me', { userAuth: true }),
+
+  chatStatus: () => request('/chat/status', { userAuth: true }),
+  chatSessions: () => request('/chat/sessions', { userAuth: true }),
+  chatMessages: (sessionId) => request(`/chat/sessions/${sessionId}/messages`, { userAuth: true }),
+  chatDeleteSession: (sessionId) =>
+    request(`/chat/sessions/${sessionId}`, { method: 'DELETE', userAuth: true }),
+  chatComplete: (body) => request('/chat/completions', { method: 'POST', body, userAuth: true }),
+
+  adminChatSummary: () => request('/chat/admin/summary'),
+  adminChatSessions: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
+    ).toString()
+    return request(`/chat/admin/sessions${qs ? `?${qs}` : ''}`)
+  },
+  adminChatSession: (id) => request(`/chat/admin/sessions/${id}`),
+
+  listUsers: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
+    ).toString()
+    return request(`/wallet/users${qs ? `?${qs}` : ''}`)
+  },
+  adminCredit: (body) => request('/wallet/admin-credit', { method: 'POST', body })
 }

@@ -9,7 +9,7 @@
       </div>
       <div class="field">
         <label>密码</label>
-        <input v-model="password" type="password" autocomplete="current-password" required />
+        <PasswordInput v-model="password" autocomplete="current-password" required />
       </div>
       <p v-if="error" class="error">{{ error }}</p>
       <button class="btn btn-primary" type="submit" :disabled="loading">
@@ -23,9 +23,11 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, setToken } from '@/api'
+import PasswordInput from '@/components/PasswordInput.vue'
 
 export default {
   name: 'AdminLogin',
+  components: { PasswordInput },
   setup() {
     const router = useRouter()
     const route = useRoute()

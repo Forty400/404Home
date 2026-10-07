@@ -10,7 +10,12 @@ router.get('/', authRequired, async (ctx) => {
     categories: db.prepare('SELECT COUNT(*) AS c FROM categories').get().c,
     news: db.prepare("SELECT COUNT(*) AS c FROM posts WHERE type = 'news'").get().c,
     tutorials: db.prepare("SELECT COUNT(*) AS c FROM posts WHERE type = 'tutorial'").get().c,
-    hotTools: db.prepare('SELECT COUNT(*) AS c FROM tools WHERE is_hot = 1').get().c
+    hotTools: db.prepare('SELECT COUNT(*) AS c FROM tools WHERE is_hot = 1').get().c,
+    users: db
+      .prepare(
+        `SELECT COUNT(*) AS c FROM users WHERE (deleted_at IS NULL OR deleted_at = '')`
+      )
+      .get().c
   }
 })
 

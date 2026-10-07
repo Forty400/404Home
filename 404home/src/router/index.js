@@ -14,7 +14,10 @@ const routes = [
       { path: 'news/:id', name: 'news-detail', component: () => import('@/views/PostDetail.vue'), props: { postType: 'news' } },
       { path: 'tutorials', name: 'tutorials', component: () => import('@/views/Tutorials.vue') },
       { path: 'tutorials/:id', name: 'tutorial-detail', component: () => import('@/views/PostDetail.vue'), props: { postType: 'tutorial' } },
-      { path: 'about', name: 'about', component: () => import('@/views/About.vue') }
+      { path: 'about', name: 'about', component: () => import('@/views/About.vue') },
+      { path: 'trial', name: 'trial', component: () => import('@/views/Trial.vue') },
+      { path: 'login', name: 'user-login', component: () => import('@/views/user/Login.vue') },
+      { path: 'register', name: 'user-register', component: () => import('@/views/user/Register.vue') }
     ]
   },
   {
@@ -30,7 +33,9 @@ const routes = [
       { path: '', name: 'admin-dashboard', component: () => import('@/views/admin/Dashboard.vue') },
       { path: 'tools', name: 'admin-tools', component: () => import('@/views/admin/Tools.vue') },
       { path: 'categories', name: 'admin-categories', component: () => import('@/views/admin/Categories.vue') },
-      { path: 'posts', name: 'admin-posts', component: () => import('@/views/admin/Posts.vue') }
+      { path: 'posts', name: 'admin-posts', component: () => import('@/views/admin/Posts.vue') },
+      { path: 'users', name: 'admin-users', component: () => import('@/views/admin/Users.vue') },
+      { path: 'chats', name: 'admin-chats', component: () => import('@/views/admin/Chats.vue') }
     ]
   }
 ]

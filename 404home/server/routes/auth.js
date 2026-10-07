@@ -19,11 +19,11 @@ router.post('/login', async (ctx) => {
     return
   }
   const token = jwt.sign(
-    { id: admin.id, username: admin.username },
+    { id: admin.id, username: admin.username, role: 'admin' },
     process.env.JWT_SECRET || 'dev-secret',
     { expiresIn: '7d' }
   )
-  ctx.body = { token, username: admin.username }
+  ctx.body = { token, username: admin.username, role: 'admin' }
 })
 
 router.get('/me', async (ctx) => {
@@ -36,7 +36,12 @@ router.get('/me', async (ctx) => {
   }
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret')
-    ctx.body = { id: payload.id, username: payload.username }
+    if (payload.role === 'user') {
+      ctx.status = 403
+      ctx.body = { error: '需要管理员权限' }
+      return
+    }
+    ctx.body = { id: payload.id, username: payload.username, role: 'admin' }
   } catch {
     ctx.status = 401
     ctx.body = { error: '登录已失效' }

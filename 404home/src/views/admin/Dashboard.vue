@@ -22,10 +22,12 @@ export default {
       categories: 0,
       news: 0,
       tutorials: 0,
-      hotTools: 0
+      hotTools: 0,
+      users: 0
     })
 
     const cards = computed(() => [
+      { label: 'C 端用户', value: stats.value.users },
       { label: '工具', value: stats.value.tools },
       { label: '分类', value: stats.value.categories },
       { label: '资讯', value: stats.value.news },
