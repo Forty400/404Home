@@ -139,7 +139,7 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px 12px;
-  background: #fff;
+  background: var(--bg-elevated);
 }
 .captcha-row {
   display: flex;
@@ -153,7 +153,7 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 0;
-  background: #fff;
+  background: var(--bg-elevated);
   cursor: pointer;
   line-height: 0;
   flex-shrink: 0;

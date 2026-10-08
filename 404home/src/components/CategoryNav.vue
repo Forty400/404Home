@@ -34,7 +34,7 @@ export default {
   padding: 0.35rem 0.75rem;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: rgba(255, 253, 248, 0.8);
+  background: var(--bg-elevated-a80);
   color: var(--ink-soft);
   font-size: 0.82rem;
   white-space: nowrap;
@@ -43,6 +43,6 @@ export default {
 .cat-item.router-link-active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #f4fff8;
+  color: var(--accent-ink);
 }
 </style>

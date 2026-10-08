@@ -54,12 +54,12 @@ export default {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 0.85rem 1.1rem;
-  background: rgba(255, 253, 248, 0.95);
+  background: var(--bg-elevated-a95);
   box-shadow: var(--shadow);
 }
 
 .search-bar input:focus {
-  outline: 2px solid rgba(31, 91, 69, 0.25);
+  outline: 2px solid var(--accent-a25);
   border-color: var(--accent);
 }
 </style>

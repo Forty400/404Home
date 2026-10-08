@@ -32,6 +32,7 @@
           <RouterLink class="text-link" to="/login">登录</RouterLink>
           <RouterLink class="text-link accent" to="/register">注册</RouterLink>
         </template>
+        <ThemeToggle />
         <RouterLink class="admin-link" to="/admin">管理</RouterLink>
       </div>
     </div>
@@ -46,10 +47,11 @@ import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { api, clearUserToken, getUserToken } from '@/api'
 import CategoryNav from '@/components/CategoryNav.vue'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 
 export default {
   name: 'AppHeader',
-  components: { CategoryNav },
+  components: { CategoryNav, ThemeToggle },
   setup() {
     const route = useRoute()
     const categories = ref([])
@@ -106,7 +108,7 @@ export default {
   top: 0;
   z-index: 20;
   backdrop-filter: blur(10px);
-  background: rgba(243, 239, 230, 0.9);
+  background: var(--bg-a90);
   border-bottom: 1px solid var(--line);
 }
 

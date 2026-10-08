@@ -9,6 +9,18 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,550;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <title>404Home · AI 工具收录</title>
+    <script>
+      // 防 FOUC：在 Vue 挂载前据 localStorage 设 <html data-theme>
+      (function () {
+        try {
+          var t = localStorage.getItem('404home:theme');
+          if (t !== 'light' && t !== 'dark' && t !== 'auto') t = 'auto';
+          document.documentElement.dataset.theme = t;
+        } catch (e) {
+          document.documentElement.dataset.theme = 'auto';
+        }
+      })();
+    </script>
   </head>
   <body>
     <noscript>

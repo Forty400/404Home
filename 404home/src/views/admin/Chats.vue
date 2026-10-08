@@ -296,7 +296,7 @@ h1, h2 {
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(28, 43, 36, 0.4);
+  background: var(--ink-a35);
   display: grid;
   place-items: center;
   padding: 20px;
@@ -330,7 +330,7 @@ h1, h2 {
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 10px 12px;
-  background: #fff;
+  background: var(--bg-elevated);
 }
 .msg.user {
   background: var(--accent-soft);

@@ -413,7 +413,7 @@ export default {
   gap: 2px;
 }
 .session-item:hover {
-  background: rgba(31, 91, 69, 0.06);
+  background: var(--accent-a6);
 }
 .session-title {
   font-size: 0.9rem;
@@ -478,7 +478,7 @@ export default {
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--bg-elevated);
 }
 .bubble.user {
   justify-self: end;
@@ -508,7 +508,7 @@ export default {
   gap: 10px;
   padding: 12px;
   border-top: 1px solid var(--line);
-  background: rgba(255, 253, 248, 0.9);
+  background: var(--bg-elevated-a90);
 }
 .composer textarea {
   resize: vertical;
@@ -516,7 +516,7 @@ export default {
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px 12px;
-  background: #fff;
+  background: var(--bg-elevated);
 }
 .notice {
   margin: 0;
@@ -559,7 +559,7 @@ export default {
     position: fixed;
     inset: 0;
     z-index: 35;
-    background: rgba(28, 43, 36, 0.35);
+    background: var(--ink-a35);
   }
 }
 @media (max-width: 560px) {

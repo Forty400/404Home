@@ -1,24 +1,129 @@
+/* ===== 主题色变量 ===== */
+/* 亮色基线：蓝 + 白 */
 :root {
-  --bg: #f3efe6;
-  --bg-elevated: #fffdf8;
-  --ink: #1c2b24;
-  --ink-soft: #4a5a52;
-  --line: #d8d0c2;
-  --accent: #1f5b45;
-  --accent-soft: #dceae2;
+  --bg: #f5f7fb;
+  --bg-elevated: #ffffff;
+  --ink: #0f172a;
+  --ink-soft: #475569;
+  --line: #e2e8f0;
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+  --accent-strong: #1d4ed8;
+  --accent-ink: #ffffff;
+  --bg-grad-start: #eef2ff;
+  --bg-grad-end: #e2e8f0;
   --hot: #b44a2e;
   --new: #2a6f9b;
-  --shadow: 0 10px 30px rgba(28, 43, 36, 0.06);
+  /* rgba 派生（消除散落硬编码替身） */
+  --ink-a5: rgba(15, 23, 42, 0.05);
+  --ink-a10: rgba(15, 23, 42, 0.1);
+  --ink-a35: rgba(15, 23, 42, 0.35);
+  --accent-a6: rgba(37, 99, 235, 0.06);
+  --accent-a25: rgba(37, 99, 235, 0.25);
+  --bg-a70: rgba(245, 247, 251, 0.7);
+  --bg-a80: rgba(245, 247, 251, 0.8);
+  --bg-a90: rgba(245, 247, 251, 0.9);
+  --bg-a95: rgba(245, 247, 251, 0.95);
+  --bg-elevated-a70: rgba(255, 255, 255, 0.7);
+  --bg-elevated-a80: rgba(255, 255, 255, 0.8);
+  --bg-elevated-a90: rgba(255, 255, 255, 0.9);
+  --bg-elevated-a95: rgba(255, 255, 255, 0.95);
+  --accent-ink-a12: rgba(255, 255, 255, 0.12);
+  --accent-ink-a20: rgba(255, 255, 255, 0.2);
+  --accent-ink-a80: rgba(255, 255, 255, 0.8);
+  --hot-a12: rgba(180, 74, 46, 0.12);
+  --new-a12: rgba(42, 111, 155, 0.12);
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
   --radius: 14px;
   --font-display: "Fraunces", "Songti SC", "Noto Serif SC", serif;
   --font-body: "IBM Plex Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color-scheme: light;
+}
+
+/* 暗色：深灰夜间 */
+[data-theme="dark"] {
+  --bg: #0f1115;
+  --bg-elevated: #161b22;
+  --ink: #e6edf3;
+  --ink-soft: #9aa7b8;
+  --line: #232a33;
+  --accent: #3b82f6;
+  --accent-soft: #1e2a44;
+  --accent-strong: #1d4ed8;
+  --accent-ink: #ffffff;
+  --bg-grad-start: #0b0d10;
+  --bg-grad-end: #161b22;
+  --hot: #e0714f;
+  --new: #5aa9d6;
+  --ink-a5: rgba(230, 237, 243, 0.05);
+  --ink-a10: rgba(230, 237, 243, 0.1);
+  --ink-a35: rgba(230, 237, 243, 0.35);
+  --accent-a6: rgba(59, 130, 246, 0.08);
+  --accent-a25: rgba(59, 130, 246, 0.3);
+  --bg-a70: rgba(15, 17, 21, 0.7);
+  --bg-a80: rgba(15, 17, 21, 0.8);
+  --bg-a90: rgba(15, 17, 21, 0.9);
+  --bg-a95: rgba(15, 17, 21, 0.95);
+  --bg-elevated-a70: rgba(22, 27, 34, 0.7);
+  --bg-elevated-a80: rgba(22, 27, 34, 0.8);
+  --bg-elevated-a90: rgba(22, 27, 34, 0.9);
+  --bg-elevated-a95: rgba(22, 27, 34, 0.95);
+  --accent-ink-a12: rgba(255, 255, 255, 0.12);
+  --accent-ink-a20: rgba(255, 255, 255, 0.2);
+  --accent-ink-a80: rgba(255, 255, 255, 0.8);
+  --hot-a12: rgba(224, 113, 79, 0.16);
+  --new-a12: rgba(90, 169, 214, 0.16);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+
+/* auto 态：无显式 data-theme 或 data-theme="auto" 时跟随系统；显式 light/dark 不受影响 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]),
+  [data-theme="auto"] {
+    --bg: #0f1115;
+    --bg-elevated: #161b22;
+    --ink: #e6edf3;
+    --ink-soft: #9aa7b8;
+    --line: #232a33;
+    --accent: #3b82f6;
+    --accent-soft: #1e2a44;
+    --accent-strong: #1d4ed8;
+    --accent-ink: #ffffff;
+    --bg-grad-start: #0b0d10;
+    --bg-grad-end: #161b22;
+    --hot: #e0714f;
+    --new: #5aa9d6;
+    --ink-a5: rgba(230, 237, 243, 0.05);
+    --ink-a10: rgba(230, 237, 243, 0.1);
+    --ink-a35: rgba(230, 237, 243, 0.35);
+    --accent-a6: rgba(59, 130, 246, 0.08);
+    --accent-a25: rgba(59, 130, 246, 0.3);
+    --bg-a70: rgba(15, 17, 21, 0.7);
+    --bg-a80: rgba(15, 17, 21, 0.8);
+    --bg-a90: rgba(15, 17, 21, 0.9);
+    --bg-a95: rgba(15, 17, 21, 0.95);
+    --bg-elevated-a70: rgba(22, 27, 34, 0.7);
+    --bg-elevated-a80: rgba(22, 27, 34, 0.8);
+    --bg-elevated-a90: rgba(22, 27, 34, 0.9);
+    --bg-elevated-a95: rgba(22, 27, 34, 0.95);
+    --accent-ink-a12: rgba(255, 255, 255, 0.12);
+    --accent-ink-a20: rgba(255, 255, 255, 0.2);
+    --accent-ink-a80: rgba(255, 255, 255, 0.8);
+    --hot-a12: rgba(224, 113, 79, 0.16);
+    --new-a12: rgba(90, 169, 214, 0.16);
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    color-scheme: dark;
+  }
 }
 
 * {
   box-sizing: border-box;
 }
 
-html, body, #app {
+html,
+body,
+#app {
   margin: 0;
   min-height: 100%;
 }
@@ -27,8 +132,9 @@ body {
   font-family: var(--font-body);
   color: var(--ink);
   background:
-    radial-gradient(circle at top left, rgba(31, 91, 69, 0.08), transparent 40%),
-    linear-gradient(180deg, #f7f3eb 0%, var(--bg) 40%, #ebe4d7 100%);
+    radial-gradient(circle at top left, var(--accent-a6), transparent 40%),
+    linear-gradient(180deg, var(--bg-grad-start) 0%, var(--bg) 40%, var(--bg-grad-end) 100%);
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
 a {
@@ -36,7 +142,10 @@ a {
   text-decoration: none;
 }
 
-button, input, select, textarea {
+button,
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -96,11 +205,11 @@ button, input, select, textarea {
 
 .btn-primary {
   background: var(--accent);
-  color: #f7fff9;
+  color: var(--accent-ink);
 }
 
 .btn-primary:hover {
-  filter: brightness(1.05);
+  filter: brightness(1.08);
 }
 
 .btn-ghost {
@@ -130,7 +239,7 @@ button, input, select, textarea {
 .field textarea {
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: #fff;
+  background: var(--bg-elevated);
   padding: 0.65rem 0.8rem;
   color: var(--ink);
 }
@@ -169,12 +278,12 @@ button, input, select, textarea {
 }
 
 .badge-hot {
-  background: rgba(180, 74, 46, 0.12);
+  background: var(--hot-a12);
   color: var(--hot);
 }
 
 .badge-new {
-  background: rgba(42, 111, 155, 0.12);
+  background: var(--new-a12);
   color: var(--new);
 }
 
