@@ -221,7 +221,7 @@ h1, h2 {
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(20, 30, 26, 0.35);
+  background: color-mix(in srgb, var(--ink) 40%, transparent);
   display: grid;
   place-items: center;
   padding: 20px;

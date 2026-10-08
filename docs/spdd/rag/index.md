@@ -7,5 +7,6 @@
 | kh-003 | SPDD 在本仓库的用法 | spdd, process | knowledge/spdd-usage.md |
 | kh-004 | 工具详情页约定 | 404home, frontend, tools | knowledge/404home-tool-detail.md |
 | kh-005 | 详情页相关工具推荐 | 404home, frontend, tools | knowledge/404home-related-tools.md |
+| kh-006 | 404Home 主题色（亮/暗/系统） | 404home, frontend, theme | knowledge/404home-theme.md |
 
 > 进行中规划（尚未沉淀为 knowledge）：DeepSeek 试用 + C 端账号 → `docs/spdd/analysis/20261007-deepseek-trial.md`、`docs/spdd/canvases/20261007-deepseek-trial-roadmap.md`。

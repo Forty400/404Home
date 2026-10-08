@@ -58,7 +58,7 @@ export default {
 
 .tool-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 34px rgba(28, 43, 36, 0.1);
+  box-shadow: var(--shadow);
 }
 
 .main-link {
@@ -122,7 +122,7 @@ export default {
 .tags span {
   font-size: 0.72rem;
   color: var(--ink-soft);
-  background: rgba(28, 43, 36, 0.05);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
   padding: 0.15rem 0.45rem;
   border-radius: 999px;
 }

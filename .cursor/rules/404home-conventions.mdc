@@ -12,4 +12,4 @@ alwaysApply: false
 - Tool URLs / hot flags live in DB（admin CRUD），不要在前端写死工具列表
 - Dev: `npm run serve` + `npm run server`；prod: Nginx → `dist` + pm2 `404home-api`
 - Secrets / SSH：只写 `404home/deploy.local.md`（gitignore）；开发阶段禁止自动改 SSH 密码
-- UI：保持现有纸感浅绿风格，避免紫渐变/霓虹暗黑套模板
+- UI：亮色 DeepSeek 邻域蓝白 + 暗色 slate；经 CSS 变量与 `html[data-theme]`；禁止紫霓虹/强 glow 模板

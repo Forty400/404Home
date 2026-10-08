@@ -24,6 +24,20 @@
         <RouterLink to="/about" @click="navOpen = false">关于</RouterLink>
       </nav>
       <div class="header-actions">
+        <button
+          type="button"
+          class="theme-switch"
+          role="switch"
+          :aria-checked="resolved === 'dark' ? 'true' : 'false'"
+          :aria-label="themeAriaLabel"
+          :title="themeTitle"
+          @click="toggleLightDark"
+        >
+          <span class="theme-switch-track" aria-hidden="true">
+            <span class="theme-switch-thumb" />
+          </span>
+          <span class="theme-switch-text">{{ resolved === 'dark' ? '暗色' : '亮色' }}</span>
+        </button>
         <template v-if="userEmail">
           <span class="user-chip" :title="userEmail">{{ userEmail }}</span>
           <button type="button" class="text-btn" @click="logout">退出</button>
@@ -42,10 +56,11 @@
 </template>
 
 <script>
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { api, clearUserToken, getUserToken } from '@/api'
 import CategoryNav from '@/components/CategoryNav.vue'
+import { useTheme } from '@/composables/useTheme'
 
 export default {
   name: 'AppHeader',
@@ -55,6 +70,22 @@ export default {
     const categories = ref([])
     const navOpen = ref(false)
     const userEmail = ref('')
+    const { preference, resolved, setTheme } = useTheme()
+
+    function toggleLightDark() {
+      setTheme(resolved.value === 'dark' ? 'light' : 'dark')
+    }
+
+    const themeTitle = computed(() => {
+      if (preference.value === 'system') {
+        return `跟随系统（当前${resolved.value === 'dark' ? '暗色' : '亮色'}），点击切换亮/暗色`
+      }
+      return resolved.value === 'dark' ? '暗色模式，点击切换为亮色' : '亮色模式，点击切换为暗色'
+    })
+    const themeAriaLabel = computed(() => {
+      const next = resolved.value === 'dark' ? '亮色' : '暗色'
+      return `主题开关，当前${resolved.value === 'dark' ? '暗色' : '亮色'}，点击切换为${next}`
+    })
 
     async function refreshUser() {
       if (!getUserToken()) {
@@ -95,7 +126,16 @@ export default {
       }
     )
 
-    return { categories, navOpen, userEmail, logout }
+    return {
+      categories,
+      navOpen,
+      userEmail,
+      logout,
+      resolved,
+      themeTitle,
+      themeAriaLabel,
+      toggleLightDark
+    }
   }
 }
 </script>
@@ -106,7 +146,7 @@ export default {
   top: 0;
   z-index: 20;
   backdrop-filter: blur(10px);
-  background: rgba(243, 239, 230, 0.9);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
   border-bottom: 1px solid var(--line);
 }
 
@@ -184,6 +224,58 @@ export default {
 .text-link.accent {
   color: var(--accent);
   font-weight: 600;
+}
+
+.theme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  padding: 4px 10px 4px 4px;
+  cursor: pointer;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.theme-switch:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.theme-switch-track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--line);
+  transition: background 0.18s ease;
+}
+
+.theme-switch[aria-checked='true'] .theme-switch-track {
+  background: var(--accent);
+}
+
+.theme-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  transition: transform 0.18s ease;
+}
+
+.theme-switch[aria-checked='true'] .theme-switch-thumb {
+  transform: translateX(16px);
+}
+
+.theme-switch-text {
+  min-width: 2em;
+  line-height: 1;
 }
 
 .nav-toggle {

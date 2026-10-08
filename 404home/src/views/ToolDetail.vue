@@ -162,7 +162,7 @@ h1 {
 .tags span {
   font-size: 0.78rem;
   color: var(--ink-soft);
-  background: rgba(28, 43, 36, 0.05);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
 }

@@ -23,7 +23,7 @@ export default { name: 'AppFooter' }
 <style scoped>
 .footer {
   border-top: 1px solid var(--line);
-  background: rgba(255, 253, 248, 0.7);
+  background: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
   padding: 36px 0 48px;
 }
 

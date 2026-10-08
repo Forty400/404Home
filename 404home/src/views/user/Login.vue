@@ -100,7 +100,8 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px 12px;
-  background: #fff;
+  background: var(--bg-elevated);
+  color: var(--ink);
 }
 .error {
   margin: 0;

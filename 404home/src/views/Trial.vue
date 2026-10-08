@@ -411,12 +411,14 @@ export default {
   min-width: 0;
   display: grid;
   gap: 2px;
+  color: var(--ink);
 }
 .session-item:hover {
-  background: rgba(31, 91, 69, 0.06);
+  background: var(--accent-soft);
 }
 .session-title {
   font-size: 0.9rem;
+  color: var(--ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -456,6 +458,7 @@ export default {
 .chat-title {
   font-size: 0.95rem;
   font-weight: 600;
+  color: var(--ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -478,7 +481,7 @@ export default {
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--bg-elevated);
 }
 .bubble.user {
   justify-self: end;
@@ -508,7 +511,7 @@ export default {
   gap: 10px;
   padding: 12px;
   border-top: 1px solid var(--line);
-  background: rgba(255, 253, 248, 0.9);
+  background: color-mix(in srgb, var(--bg-elevated) 90%, transparent);
 }
 .composer textarea {
   resize: vertical;
@@ -516,7 +519,8 @@ export default {
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px 12px;
-  background: #fff;
+  background: var(--bg-elevated);
+  color: var(--ink);
 }
 .notice {
   margin: 0;
@@ -559,7 +563,7 @@ export default {
     position: fixed;
     inset: 0;
     z-index: 35;
-    background: rgba(28, 43, 36, 0.35);
+    background: color-mix(in srgb, var(--ink) 40%, transparent);
   }
 }
 @media (max-width: 560px) {

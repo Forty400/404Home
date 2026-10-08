@@ -43,8 +43,8 @@ export default {
 }
 
 .side {
-  background: #16352a;
-  color: #eef7f1;
+  background: var(--accent);
+  color: var(--on-accent);
   padding: 24px 18px;
   display: flex;
   flex-direction: column;
@@ -64,18 +64,18 @@ nav {
 nav a {
   padding: 0.55rem 0.75rem;
   border-radius: 10px;
-  color: rgba(238, 247, 241, 0.8);
+  color: color-mix(in srgb, var(--on-accent) 80%, transparent);
 }
 
 nav a.router-link-active {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: color-mix(in srgb, var(--on-accent) 14%, transparent);
+  color: var(--on-accent);
 }
 
 .btn {
   margin-top: auto;
-  color: #eef7f1;
-  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--on-accent);
+  border-color: color-mix(in srgb, var(--on-accent) 28%, transparent);
 }
 
 .content {
