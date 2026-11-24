@@ -1,8 +1,11 @@
 <template>
   <div>
     <div class="head">
-      <h1>资讯 / 教程</h1>
-      <button class="btn btn-primary" type="button" @click="openCreate">新增内容</button>
+      <h1>资讯总览</h1>
+      <div class="head-actions">
+        <RouterLink class="btn btn-ghost" to="/admin/posts/review">待审</RouterLink>
+        <RouterLink class="btn btn-primary" to="/admin/posts/editor">手写发文</RouterLink>
+      </div>
     </div>
 
     <div class="card-panel table-wrap">
@@ -12,7 +15,7 @@
             <th>标题</th>
             <th>类型</th>
             <th>专题</th>
-            <th>状态</th>
+            <th>生命周期</th>
             <th>时间</th>
             <th>操作</th>
           </tr>
@@ -25,74 +28,36 @@
             </td>
             <td>{{ post.type === 'news' ? '资讯' : '教程' }}</td>
             <td>{{ topicLabel(post.topic) }}{{ post.is_hot ? ' · 热' : '' }}</td>
-            <td>{{ post.published ? '已发布' : '草稿' }}</td>
+            <td>{{ lifecycleLabel(post.lifecycle) }}</td>
             <td>{{ post.created_at }}</td>
             <td class="actions">
-              <button class="btn btn-ghost" type="button" @click="openEdit(post)">编辑</button>
-              <button class="btn btn-ghost" type="button" @click="remove(post)">删除</button>
+              <RouterLink class="btn btn-ghost" :to="`/admin/posts/editor?id=${post.id}`">编辑</RouterLink>
+              <button
+                v-if="post.lifecycle === 'published'"
+                class="btn btn-ghost"
+                type="button"
+                @click="archive(post)"
+              >
+                下线
+              </button>
+              <button
+                v-if="post.lifecycle === 'draft'"
+                class="btn btn-ghost"
+                type="button"
+                @click="publish(post)"
+              >
+                发布
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-
-    <div v-if="showForm" class="modal">
-      <form class="card-panel form" @submit.prevent="save">
-        <h2>{{ form.id ? '编辑内容' : '新增内容' }}</h2>
-        <div class="field">
-          <label>类型</label>
-          <select v-model="form.type">
-            <option value="news">资讯</option>
-            <option value="tutorial">教程</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>专题</label>
-          <select v-model="form.topic">
-            <option value="plugin">AI 插件</option>
-            <option value="dev">AI 开发</option>
-            <option value="method">AI 方法论</option>
-            <option value="news">AI 新闻</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>标题</label>
-          <input v-model="form.title" required />
-        </div>
-        <div class="field">
-          <label>摘要</label>
-          <textarea v-model="form.summary" />
-        </div>
-        <div class="field">
-          <label>封面 URL</label>
-          <input v-model="form.cover" placeholder="/covers/hot-01.svg" />
-        </div>
-        <div class="field">
-          <label>出处名称</label>
-          <input v-model="form.source_name" />
-        </div>
-        <div class="field">
-          <label>出处链接</label>
-          <input v-model="form.source_url" type="url" />
-        </div>
-        <div class="field">
-          <label>正文</label>
-          <textarea v-model="form.content" class="long" />
-        </div>
-        <label class="check"><input v-model="form.is_hot" type="checkbox" /> 热门</label>
-        <label class="check"><input v-model="form.published" type="checkbox" /> 发布</label>
-        <p v-if="error" class="error">{{ error }}</p>
-        <div class="actions">
-          <button class="btn btn-ghost" type="button" @click="showForm = false">取消</button>
-          <button class="btn btn-primary" type="submit">保存</button>
-        </div>
-      </form>
-    </div>
   </div>
 </template>
 
 <script>
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { api } from '@/api'
 
 const TOPIC_LABELS = {
@@ -102,82 +67,43 @@ const TOPIC_LABELS = {
   news: '新闻'
 }
 
-function emptyForm() {
-  return {
-    id: null,
-    type: 'news',
-    topic: 'news',
-    title: '',
-    summary: '',
-    content: '',
-    cover: '',
-    source_name: '',
-    source_url: '',
-    is_hot: false,
-    published: true
-  }
+const LIFE_LABELS = {
+  pending_review: '待审',
+  draft: '草稿',
+  published: '已发布',
+  archived: '回收站'
 }
 
 function topicLabel(topic) {
   return TOPIC_LABELS[topic] || topic || '—'
 }
 
+function lifecycleLabel(life) {
+  return LIFE_LABELS[life] || life || '—'
+}
+
 export default {
   name: 'AdminPosts',
   setup() {
     const posts = ref([])
-    const showForm = ref(false)
-    const form = reactive(emptyForm())
-    const error = ref('')
 
     async function load() {
-      posts.value = await api.getPosts({ all: 1 })
+      const all = await api.getPosts({ all: 1 })
+      posts.value = all.filter((p) => p.lifecycle !== 'archived')
     }
 
-    function openCreate() {
-      Object.assign(form, emptyForm())
-      error.value = ''
-      showForm.value = true
+    async function archive(post) {
+      await api.archivePost(post.id)
+      await load()
     }
 
-    function openEdit(post) {
-      Object.assign(form, {
-        id: post.id,
-        type: post.type,
-        topic: post.topic || 'news',
-        title: post.title,
-        summary: post.summary,
-        content: post.content,
-        cover: post.cover || '',
-        source_name: post.source_name || '',
-        source_url: post.source_url || '',
-        is_hot: !!post.is_hot,
-        published: post.published
-      })
-      error.value = ''
-      showForm.value = true
-    }
-
-    async function save() {
-      error.value = ''
-      try {
-        if (form.id) await api.updatePost(form.id, { ...form })
-        else await api.createPost({ ...form })
-        showForm.value = false
-        await load()
-      } catch (e) {
-        error.value = e.message
-      }
-    }
-
-    async function remove(post) {
-      if (!confirm(`确定删除「${post.title}」？`)) return
-      await api.deletePost(post.id)
+    async function publish(post) {
+      await api.publishPost(post.id)
       await load()
     }
 
     onMounted(load)
-    return { posts, showForm, form, error, openCreate, openEdit, save, remove, topicLabel }
+    return { posts, topicLabel, lifecycleLabel, archive, publish }
   }
 }
 </script>
@@ -189,7 +115,8 @@ export default {
   align-items: center;
   margin-bottom: 16px;
 }
-h1, h2 {
+.head-actions { display: flex; gap: 8px; }
+h1 {
   margin: 0;
   font-family: var(--font-display);
 }
@@ -200,26 +127,4 @@ h1, h2 {
   margin-top: 4px;
 }
 .actions { display: flex; gap: 8px; }
-.modal {
-  position: fixed;
-  inset: 0;
-  background: color-mix(in srgb, var(--ink) 40%, transparent);
-  display: grid;
-  place-items: center;
-  padding: 20px;
-  z-index: 50;
-}
-.form {
-  width: min(640px, 100%);
-  padding: 22px;
-  max-height: 90vh;
-  overflow: auto;
-}
-.long { min-height: 180px; }
-.check {
-  display: inline-flex;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-.error { color: var(--hot); }
 </style>

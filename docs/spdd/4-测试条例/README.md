@@ -36,9 +36,12 @@
 | [404home-customer-service-cases.md](./404home-customer-service-cases.md) | 6 P0 |
 | [404home-site-analytics-cases.md](./404home-site-analytics-cases.md) | 4 P0 |
 | [404home-deepseek-trial-cases.md](./404home-deepseek-trial-cases.md) | 4 |
+| [404home-tool-rag-mcp-cases.md](./404home-tool-rag-mcp-cases.md) | 见文件 |
+| [404home-article-ingest-review-cases.md](./404home-article-ingest-review-cases.md) | 7 P0 |
 
-`Code tests` 均为**待补**（仓库尚无测试脚手架）。
+`Code tests`：**部分已落地**（`404home/npm test`：auth / wallet / chat / architecture 等 P0；DeepSeek 用 `DEEPSEEK_STUB=1`）。条例中的 `Code tests` 链接仍可能滞后，审查时以仓库测试文件为准。
 
+Harness 模块对照：`../1-资产规范/404home-harness-modules.md` · 审查底稿 `../analysis/20261125-harness-module-requirements.md`  
 回填决策：`docs/spdd/2-adr决策/ADR-20261012-backfill-tests-by-module.md`
 
 ## 命名

@@ -1,0 +1,28 @@
+{
+  "dailyLimit": 5,
+  "pendingLimit": 20,
+  "newsFeeds": [
+    {
+      "name": "OpenAI News",
+      "url": "https://openai.com/news/rss.xml"
+    },
+    {
+      "name": "Google DeepMind",
+      "url": "https://deepmind.google/blog/rss.xml"
+    },
+    {
+      "name": "Hugging Face Blog",
+      "url": "https://huggingface.co/blog/feed.xml"
+    }
+  ],
+  "githubQueries": [
+    {
+      "q": "AI agent methodology in:readme stars:>200",
+      "perPage": 3
+    },
+    {
+      "q": "LLM RAG tutorial in:readme stars:>100",
+      "perPage": 2
+    }
+  ]
+}

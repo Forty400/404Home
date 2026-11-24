@@ -12,6 +12,9 @@
 | kh-008 | 404Home 工具智能检索（RAG + MCP） | 404home, rag, mcp, search | knowledge/404home-tool-rag-mcp.md |
 | kh-009 | 404Home Trial SSE 流式 + LLM 适配 | 404home, trial, sse, llm, billing | knowledge/404home-trial-sse.md |
 
-> 分模块资产：`1-资产规范/` · `3-测试边界/` · `4-测试条例/`（九模块索引见各目录 README）。  
+> 分模块资产：`1-资产规范/` · `3-测试边界/` · `4-测试条例/`（Harness H01–H18 见 `1-资产规范/404home-harness-modules.md`）。  
+> **完整性审查底稿**：`analysis/20261125-harness-module-requirements.md`。  
+> **已落地 P0 · 采集审稿**：分析/画布 `20261125-article-ingest-review`；ADR-20261125；admin 待审/写稿/回收站；`server/ingest/` 静默采集（待审≥20 停采）。  
+
 > 进行中规划：DeepSeek 试用纲领见 `1-资产规范/404home-deepseek-trial.md`；分析/画布见 `analysis/20261007-deepseek-trial.md`、`canvases/20261007-deepseek-trial-roadmap.md`。  
 > **工具 RAG + MCP（已落地 P0）**：画布 `canvases/20261105-tool-rag-mcp.md`；HANDOFF / `404home/AI指导文档/`；技术说明 `404home/docs/智能检索-技术说明.md`。

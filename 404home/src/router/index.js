@@ -105,6 +105,21 @@ const routes = [
       { path: 'tools', name: 'admin-tools', component: () => import('@/views/admin/Tools.vue') },
       { path: 'categories', name: 'admin-categories', component: () => import('@/views/admin/Categories.vue') },
       { path: 'posts', name: 'admin-posts', component: () => import('@/views/admin/Posts.vue') },
+      {
+        path: 'posts/review',
+        name: 'admin-posts-review',
+        component: () => import('@/views/admin/PostReview.vue')
+      },
+      {
+        path: 'posts/editor',
+        name: 'admin-posts-editor',
+        component: () => import('@/views/admin/PostEditor.vue')
+      },
+      {
+        path: 'posts/trash',
+        name: 'admin-posts-trash',
+        component: () => import('@/views/admin/PostTrash.vue')
+      },
       { path: 'users', name: 'admin-users', component: () => import('@/views/admin/Users.vue') },
       { path: 'chats', name: 'admin-chats', component: () => import('@/views/admin/Chats.vue') },
       { path: 'cs', name: 'admin-cs', component: () => import('@/views/admin/CsWorkbench.vue') }

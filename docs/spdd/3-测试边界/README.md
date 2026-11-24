@@ -34,8 +34,12 @@
 | 全站客服 | [404home-customer-service.md](./404home-customer-service.md) | [../4-测试条例/404home-customer-service-cases.md](../4-测试条例/404home-customer-service-cases.md) |
 | 站内访问量 | [404home-site-analytics.md](./404home-site-analytics.md) | [../4-测试条例/404home-site-analytics-cases.md](../4-测试条例/404home-site-analytics-cases.md) |
 | 试用纲领 E2E | [404home-deepseek-trial.md](./404home-deepseek-trial.md) | [../4-测试条例/404home-deepseek-trial-cases.md](../4-测试条例/404home-deepseek-trial-cases.md) |
+| 工具 RAG + MCP | [404home-tool-rag-mcp.md](./404home-tool-rag-mcp.md) | [../4-测试条例/404home-tool-rag-mcp-cases.md](../4-测试条例/404home-tool-rag-mcp-cases.md) |
+| 采集审稿 / 回收站 | [404home-article-ingest-review.md](./404home-article-ingest-review.md) | [../4-测试条例/404home-article-ingest-review-cases.md](../4-测试条例/404home-article-ingest-review-cases.md) |
 
-回填决策：`docs/spdd/2-adr决策/ADR-20261012-backfill-tests-by-module.md`
+Harness 模块对照：`../1-资产规范/404home-harness-modules.md` · 审查底稿 `../analysis/20261125-harness-module-requirements.md`  
+回填决策：`docs/spdd/2-adr决策/ADR-20261012-backfill-tests-by-module.md`  
+已知无独立边界：CMS 宿主 CRUD（H02）、作品集叙事（H17）。
 
 ## 与测试条例的分工
 

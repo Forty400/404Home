@@ -17,7 +17,7 @@
 
 1. 栈：前台 Vue 3 + Vue Router；后端 Koa + koa-router + JWT；DB SQLite（better-sqlite3）。
 2. 目录：前端 `404home/`；API `404home/server/`（入口 `index.js`）；开发代理 `/api` → `localhost:3001`。
-3. CMS 数据模型基线：`categories` / `tools` / `posts`（`type` news|tutorial；扩展 `topic` plugin|dev|method|news、`source_name`/`source_url`、`is_hot`、`cover`）/ `admins`；工具 URL、热门与文章等后台/seed 配置，**禁止前端写死工具或文章列表**。宿主首页 IA 见 `ADR-20261021-hot-articles-home`。
+3. CMS 数据模型基线：`categories` / `tools` / `posts`（`type` news|tutorial；扩展 `topic` plugin|dev|method|news、`source_name`/`source_url`、`is_hot`、`cover`、**`lifecycle`** `pending_review|draft|published|archived`、可选 `ingest_bot`）/ `admins`；`published` 与 `lifecycle=published` 同步。工具 URL、热门与文章等后台/seed 配置，**禁止前端写死工具或文章列表**。宿主首页 IA 见 `ADR-20261021-hot-articles-home`；静默采集审稿见 `ADR-20261125-article-ingest-review`。
 4. C 端能力（用户/钱包/聊天）是**增量模块**，不替换 `/admin` CMS，不改写主导航信息架构；前台 Header **不展示**「管理」入口（直访 `/admin` 仍可用）。
 5. 双角色 JWT：`role: user` 与 `role: admin` 分离；中间件 `userRequired` / `adminRequired`；**禁止跨角色冒用**。
 6. 金额一律**整数分（cents）**存储与结算；余额不可为负；改余额必须走账本，禁止裸 `UPDATE users SET balance`。

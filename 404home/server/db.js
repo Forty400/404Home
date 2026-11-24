@@ -225,6 +225,15 @@ function migratePostsSchema() {
   add('source_name', "source_name TEXT NOT NULL DEFAULT ''")
   add('source_url', "source_url TEXT NOT NULL DEFAULT ''")
   add('is_hot', 'is_hot INTEGER NOT NULL DEFAULT 0')
+  add('lifecycle', "lifecycle TEXT NOT NULL DEFAULT 'draft'")
+  add('ingest_bot', "ingest_bot TEXT NOT NULL DEFAULT ''")
+  // backfill once: published=1 → published lifecycle
+  db.prepare(
+    `UPDATE posts SET lifecycle = 'published' WHERE published = 1 AND (lifecycle = 'draft' OR lifecycle = '')`
+  ).run()
+  db.prepare(
+    `UPDATE posts SET lifecycle = 'draft' WHERE published = 0 AND lifecycle = 'published'`
+  ).run()
 }
 
 function migrateToolsSchema() {
@@ -253,14 +262,35 @@ function parseTool(row) {
 
 function parsePost(row) {
   if (!row) return null
+  const lifecycle = row.lifecycle || (row.published ? 'published' : 'draft')
   return {
     ...row,
-    published: !!row.published,
+    published: lifecycle === 'published',
     is_hot: !!row.is_hot,
     topic: row.topic || 'news',
     source_name: row.source_name || '',
-    source_url: row.source_url || ''
+    source_url: row.source_url || '',
+    lifecycle,
+    ingest_bot: row.ingest_bot || ''
   }
+}
+
+const POST_LIFECYCLES = new Set(['pending_review', 'draft', 'published', 'archived'])
+
+function pendingReviewLimit() {
+  const n = Number(process.env.PENDING_REVIEW_LIMIT)
+  return Number.isFinite(n) && n > 0 ? n : 20
+}
+
+function countPendingReview() {
+  return db.prepare(`SELECT COUNT(*) AS n FROM posts WHERE lifecycle = 'pending_review'`).get().n
+}
+
+function setPostLifecycle(id, lifecycle) {
+  if (!POST_LIFECYCLES.has(lifecycle)) return null
+  const published = lifecycle === 'published' ? 1 : 0
+  db.prepare('UPDATE posts SET lifecycle = ?, published = ? WHERE id = ?').run(lifecycle, published, id)
+  return parsePost(db.prepare('SELECT * FROM posts WHERE id = ?').get(id))
 }
 
 function safeJsonParse(value, fallback) {
@@ -276,5 +306,9 @@ initSchema()
 module.exports = {
   db,
   parseTool,
-  parsePost
+  parsePost,
+  POST_LIFECYCLES,
+  pendingReviewLimit,
+  countPendingReview,
+  setPostLifecycle
 }

@@ -9,7 +9,9 @@
     "seed": "node seed.js",
     "test": "node --test test/**/*.test.js",
     "reindex:tools": "node scripts/reindex-tools.js",
-    "eval:recall": "node scripts/eval-recall-at-5.js"
+    "eval:recall": "node scripts/eval-recall-at-5.js",
+    "ingest": "node ingest/run.js",
+    "ingest:dry": "node ingest/run.js --dry-run"
   },
   "dependencies": {
     "@koa/cors": "^5.0.0",

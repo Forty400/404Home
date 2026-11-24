@@ -9,7 +9,10 @@
         <RouterLink to="/admin/cs">客服工作台</RouterLink>
         <RouterLink to="/admin/tools">工具</RouterLink>
         <RouterLink to="/admin/categories">分类</RouterLink>
-        <RouterLink to="/admin/posts">资讯/教程</RouterLink>
+        <RouterLink to="/admin/posts">资讯总览</RouterLink>
+        <RouterLink to="/admin/posts/review">待审稿件</RouterLink>
+        <RouterLink to="/admin/posts/editor">手写发文</RouterLink>
+        <RouterLink to="/admin/posts/trash">回收站</RouterLink>
       </nav>
       <button class="btn btn-ghost" type="button" @click="logout">退出登录</button>
     </aside>

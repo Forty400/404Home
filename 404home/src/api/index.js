@@ -98,6 +98,11 @@ export const api = {
   createPost: (body) => request('/posts', { method: 'POST', body }),
   updatePost: (id, body) => request(`/posts/${id}`, { method: 'PUT', body }),
   deletePost: (id) => request(`/posts/${id}`, { method: 'DELETE' }),
+  approvePost: (id) => request(`/posts/${id}/approve`, { method: 'POST', body: {} }),
+  publishPost: (id) => request(`/posts/${id}/publish`, { method: 'POST', body: {} }),
+  archivePost: (id) => request(`/posts/${id}/archive`, { method: 'POST', body: {} }),
+  restorePost: (id) => request(`/posts/${id}/restore`, { method: 'POST', body: {} }),
+  forkPost: (id) => request(`/posts/${id}/fork`, { method: 'POST', body: {} }),
 
   login: (body) => request('/auth/login', { method: 'POST', body }),
   me: () => request('/auth/me'),

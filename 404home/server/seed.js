@@ -530,12 +530,27 @@ function seed() {
   capHotTools(8)
   ensureToolDecisions()
   ensureUatUser()
+  syncPostLifecycles()
+}
+
+/** Keep lifecycle in sync with legacy published flag for seed/old rows. */
+function syncPostLifecycles() {
+  db.prepare(
+    `UPDATE posts SET lifecycle = 'published', published = 1
+     WHERE published = 1 AND lifecycle NOT IN ('archived')`
+  ).run()
+  db.prepare(
+    `UPDATE posts SET published = 0 WHERE lifecycle IN ('draft','pending_review','archived')`
+  ).run()
+  db.prepare(
+    `UPDATE posts SET lifecycle = 'draft' WHERE published = 0 AND (lifecycle IS NULL OR lifecycle = '')`
+  ).run()
 }
 
 function ensureHotArticles() {
   const insertPost = db.prepare(`
-    INSERT INTO posts (type, title, summary, content, cover, topic, source_name, source_url, is_hot, published, created_at)
-    VALUES (@type, @title, @summary, @content, @cover, @topic, @source_name, @source_url, @is_hot, 1, @created_at)
+    INSERT INTO posts (type, title, summary, content, cover, topic, source_name, source_url, is_hot, published, lifecycle, created_at)
+    VALUES (@type, @title, @summary, @content, @cover, @topic, @source_name, @source_url, @is_hot, 1, 'published', @created_at)
   `)
   const hasTitle = db.prepare('SELECT id FROM posts WHERE title = ?')
   const atOffset = db.prepare(`SELECT datetime('now', ?) AS t`)
