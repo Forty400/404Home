@@ -585,17 +585,21 @@ function collapseRepeatedBodyPads(content) {
   return out
 }
 
+/** Strip old ≥280 period-filler tails (never pad with 。 again). */
+function stripPeriodFiller(content) {
+  if (!content) return content || ''
+  return content.replace(/。{5,}/g, '')
+}
+
 function thickenShortArticles(minLen = 280) {
   const rows = db.prepare('SELECT id, content FROM posts WHERE published = 1').all()
   const upd = db.prepare('UPDATE posts SET content = ? WHERE id = ?')
   let n = 0
   for (const r of rows) {
-    let content = collapseRepeatedBodyPads(r.content || '')
+    let content = stripPeriodFiller(collapseRepeatedBodyPads(r.content || ''))
     if (content.length < minLen) {
       const pad = BODY_PAD.trim()
-      if (!content.includes(pad)) content += BODY_PAD
-      // short unique filler — never re-append BODY_PAD in a loop
-      while (content.length < minLen) content += '。'
+      if (pad && !content.includes(pad)) content += BODY_PAD
     }
     if (content !== (r.content || '')) {
       upd.run(content, r.id)
@@ -735,7 +739,7 @@ function spreadClusteredPostTimes() {
   console.log(`Spread created_at for ${rows.length} posts`)
 }
 
-module.exports = { seed, BODY_PAD, collapseRepeatedBodyPads }
+module.exports = { seed, BODY_PAD, collapseRepeatedBodyPads, stripPeriodFiller }
 
 if (require.main === module) {
   require('dotenv').config()

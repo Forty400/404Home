@@ -27,7 +27,7 @@ after(async () => {
 })
 
 describe('ux sprint a P0', () => {
-  it('TC-03: no consecutive BODY_PAD; content ≥280', () => {
+  it('TC-03: no consecutive BODY_PAD; no period filler', () => {
     assert.ok(BODY_PAD && BODY_PAD.length > 20)
     const pad = BODY_PAD.trim()
     const duplex = `${pad}\n\n${pad}`
@@ -35,8 +35,8 @@ describe('ux sprint a P0', () => {
     assert.ok(rows.length >= 1)
     for (const r of rows) {
       const content = r.content || ''
-      assert.ok(content.length >= 280, `post ${r.id} len=${content.length}`)
       assert.ok(!content.includes(duplex), `post ${r.id} has repeated BODY_PAD`)
+      assert.ok(!/。{5,}/.test(content), `post ${r.id} has period filler`)
     }
   })
 

@@ -44,7 +44,7 @@
 | UX-10 | P2 | 试用入口预览 | done | `Trial.vue` + 鉴权策略 | 未登录可见示例/额度说明，再引导登录 |
 | UX-21 | P0 | 空搜文章引导 | done | `Search.vue` + `matchPostsByQuery` | 工具 0 结果时链相关文章；标明仅工具 |
 | UX-22 | P0 | 去掉假「充值」 | done | `Trial.vue` · `useTrialChat.js` | 用户可见文案无「充值」 |
-| UX-23 | P0 | 正文去重补厚 | done | `server/seed.js` | 无连续重复 BODY_PAD；≥280 |
+| UX-23 | P0 | 正文去重补厚 | done | `server/seed.js` | 无连续重复 BODY_PAD；无句号灌水（2026-11-25 取消 ≥280 硬闸） |
 | UX-24 | P0 | 登录弹层 CTA 可见 | done | `AuthModal.vue` | 窄屏主提交按钮可见（sticky） |
 | UX-25 | P1 | 三套分类并行 | done | Home 标签说清 | topic=文章；chip=搜工具；条=工具分类 |
 | UX-26 | P1 | 内容页挂工具分类条 | done | `shouldShowCategoryNav` | 内容/试用隐藏 |

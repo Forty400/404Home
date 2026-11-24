@@ -4,7 +4,7 @@
 - Related boundary: `docs/spdd/3-测试边界/404home-ux-week-bc.md`
 - Related canvas: `docs/spdd/canvases/20261021-ux-week-bc.md`
 - Code tests: `404home/src/utils/pickFeaturedRank.spec.js` · `searchHints.spec.js` · `404home/server/test/ux-week-bc-p0.test.js`
-- Updated: 2026-10-21
+- Updated: 2026-11-25
 
 ## Cases
 
@@ -36,12 +36,12 @@
 - **When**: 统计 tools `is_hot=1`
 - **Then**: ≤8
 
-### TC-05 · 正文厚度
+### TC-05 · 正文无句号灌水
 
 - Priority: P0
 - **Given**: seed 后已发布 posts
-- **When**: 检查 `content` 长度
-- **Then**: 全部 ≥280 字符
+- **When**: 检查 `content`
+- **Then**: 无连续 ≥5 个中文句号 `。`（不做 ≥280 硬凑）
 
 ### TC-06 · 工具决策字段
 

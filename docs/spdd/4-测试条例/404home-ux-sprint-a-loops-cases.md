@@ -4,7 +4,7 @@
 - Related boundary: `docs/spdd/3-测试边界/404home-ux-sprint-a-loops.md`
 - Related canvas: `docs/spdd/canvases/20261021-ux-sprint-a-loops.md`
 - Code tests: `404home/src/utils/matchPostsByQuery.spec.js` · `404home/server/test/ux-sprint-a-p0.test.js`
-- Updated: 2026-10-21
+- Updated: 2026-11-25
 
 ## Cases
 
@@ -22,12 +22,12 @@
 - **When**: `matchPostsByQuery(posts, '  ', 5)`
 - **Then**: `[]`
 
-### TC-03 · 无连续重复 BODY_PAD
+### TC-03 · 无连续重复 BODY_PAD、无句号灌水
 
 - Priority: P0
 - **Given**: seed 后已发布 posts
-- **When**: 检查 `content` 是否含连续两段相同补厚块
-- **Then**: 无；且全部 `length(content) ≥ 280`
+- **When**: 检查 `content`
+- **Then**: 无连续两段相同 `BODY_PAD`；无连续 ≥5 个中文句号 `。`
 
 ### TC-04 · Trial 文案无「充值」（源码）
 

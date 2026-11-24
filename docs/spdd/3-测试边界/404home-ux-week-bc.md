@@ -4,19 +4,19 @@
 - Related ADR: `docs/spdd/2-adr决策/ADR-20261021-ux-week-bc.md`
 - Related canvas: `docs/spdd/canvases/20261021-ux-week-bc.md`
 - Related 条例: `docs/spdd/4-测试条例/404home-ux-week-bc-cases.md`
-- Updated: 2026-10-21
+- Updated: 2026-11-25
 
 ## 1. System under test
 
 - `pickFeaturedRank` / `SEARCH_HINTS`
-- seed：热门配额、正文补厚、工具决策字段回填
+- seed：热门配额、正文补厚（无句号灌水）、工具决策字段回填
 - `tools` schema 新列经 migrate + API 读写
 
 ## 2. In scope
 
 - 精选榜与 Feed id 去重
 - 每 topic 热门文章 ≤3；热门工具 ≤8
-- 文章 `content` 长度下限（seed 后）
+- 文章 content 无连续 ≥5 句号灌水（不做 ≥280 硬凑）
 - 工具 `pricing` / `region_avail` / `scenario` 可读写
 - 搜索热词常量非空
 

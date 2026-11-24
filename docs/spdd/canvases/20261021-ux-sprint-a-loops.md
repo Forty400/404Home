@@ -30,7 +30,7 @@
 
 - [x] 搜「RAG」工具 0 条时可见相关文章链与「仅覆盖工具」说明
 - [x] Trial 与 INSUFFICIENT_BALANCE 提示无「充值」字样
-- [x] seed 后无连续重复 `BODY_PAD`；正文仍 ≥280
+- [x] seed 后无连续重复 `BODY_PAD`；无句号灌水（2026-11-25 取消 ≥280 硬闸）
 - [x] AuthModal 注册表单主按钮 sticky/可见（CSS + 结构）
 - [x] P0 自动化绿
 

@@ -41,11 +41,11 @@ describe('ux week bc P0', () => {
     assert.ok(n <= 8, `hot tools=${n}`)
   })
 
-  it('TC-05: published article content ≥280 chars', () => {
-    const rows = db.prepare('SELECT id, length(content) AS len FROM posts WHERE published = 1').all()
+  it('TC-05: published articles have no period filler', () => {
+    const rows = db.prepare('SELECT id, content FROM posts WHERE published = 1').all()
     assert.ok(rows.length >= 1)
     for (const r of rows) {
-      assert.ok(r.len >= 280, `post ${r.id} len=${r.len}`)
+      assert.ok(!/。{5,}/.test(r.content || ''), `post ${r.id} has period filler`)
     }
   })
 
