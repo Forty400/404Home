@@ -7,7 +7,8 @@ const {
   countPendingReview,
   setPostLifecycle
 } = require('../db')
-const { authRequired } = require('../middleware/auth')
+const { authRequired, getToken, isAdminPayload } = require('../middleware/auth')
+const jwt = require('jsonwebtoken')
 
 const router = new Router({ prefix: '/api/posts' })
 
@@ -26,6 +27,17 @@ function resolveLifecycle(body, { forIngest = false } = {}) {
   return 'draft'
 }
 
+function tryAdmin(ctx) {
+  const token = getToken(ctx)
+  if (!token) return false
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret')
+    return isAdminPayload(payload)
+  } catch {
+    return false
+  }
+}
+
 router.get('/', async (ctx) => {
   const { type, topic, hot, all, lifecycle } = ctx.query
   const where = []
@@ -41,7 +53,8 @@ router.get('/', async (ctx) => {
   if (hot === '1') {
     where.push('is_hot = 1')
   }
-  if (all === '1') {
+  const admin = all === '1' && tryAdmin(ctx)
+  if (admin) {
     if (lifecycle && POST_LIFECYCLES.has(lifecycle)) {
       where.push('lifecycle = @lifecycle')
       params.lifecycle = lifecycle
@@ -64,15 +77,10 @@ router.get('/:id', async (ctx) => {
     return
   }
   const post = parsePost(row)
-  const isAdminList = ctx.query.all === '1'
-  if (!isAdminList && post.lifecycle !== 'published') {
-    // Public detail: only published (admin uses list+edit with auth elsewhere)
-    const auth = ctx.get('authorization') || ''
-    if (!auth.startsWith('Bearer ')) {
-      ctx.status = 404
-      ctx.body = { error: '文章不存在' }
-      return
-    }
+  if (post.lifecycle !== 'published' && !tryAdmin(ctx)) {
+    ctx.status = 404
+    ctx.body = { error: '文章不存在' }
+    return
   }
   ctx.body = post
 })

@@ -75,6 +75,12 @@ describe('article ingest review P0', () => {
     assert.ok(!res.data.some((p) => p.title === 'draft-only'))
     assert.ok(!res.data.some((p) => p.title === 'pending-only'))
     assert.ok(!res.data.some((p) => p.title === 'archived-only'))
+
+    // all=1 without admin must not leak pending
+    const leak = await api.request('GET', '/api/posts?all=1&lifecycle=pending_review')
+    assert.equal(leak.status, 200)
+    assert.ok(!leak.data.some((p) => p.title === 'pending-only'))
+    assert.ok(leak.data.every((p) => p.lifecycle === 'published'))
   })
 
   it('TC-02: approve -> draft, still not public', async () => {
