@@ -7,7 +7,7 @@ const {
   countPendingReview,
   setPostLifecycle
 } = require('../db')
-const { authRequired, getToken, isAdminPayload } = require('../middleware/auth')
+const { authRequired, authRequiredOrIngest, getToken, isAdminPayload } = require('../middleware/auth')
 const jwt = require('jsonwebtoken')
 
 const router = new Router({ prefix: '/api/posts' })
@@ -85,7 +85,7 @@ router.get('/:id', async (ctx) => {
   ctx.body = post
 })
 
-router.post('/', authRequired, async (ctx) => {
+router.post('/', authRequiredOrIngest, async (ctx) => {
   const body = ctx.request.body || {}
   const {
     type = 'news',

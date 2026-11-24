@@ -49,6 +49,17 @@ function authRequired(ctx, next) {
 
 const adminRequired = authRequired
 
+/** Admin JWT, or static X-Ingest-Token for silent collectors (no JWT expiry). */
+function authRequiredOrIngest(ctx, next) {
+  const expected = process.env.INGEST_TOKEN || ''
+  const got = ctx.get('x-ingest-token') || ''
+  if (expected && got && got === expected) {
+    ctx.state.user = { role: 'admin', username: 'ingest-bot' }
+    return next()
+  }
+  return authRequired(ctx, next)
+}
+
 /** C-end user routes */
 function userRequired(ctx, next) {
   const payload = verifyPayload(ctx)
@@ -63,6 +74,7 @@ function userRequired(ctx, next) {
 
 module.exports = {
   authRequired,
+  authRequiredOrIngest,
   adminRequired,
   userRequired,
   getToken,

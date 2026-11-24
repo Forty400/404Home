@@ -1,5 +1,7 @@
 {
   "dailyLimit": 5,
+  "newsLimit": 3,
+  "githubLimit": 2,
   "pendingLimit": 20,
   "newsFeeds": [
     {
@@ -13,16 +15,24 @@
     {
       "name": "Hugging Face Blog",
       "url": "https://huggingface.co/blog/feed.xml"
+    },
+    {
+      "name": "MIT Technology Review — AI",
+      "url": "https://www.technologyreview.com/topic/artificial-intelligence/feed"
     }
   ],
   "githubQueries": [
     {
       "q": "AI agent methodology in:readme stars:>200",
-      "perPage": 3
+      "perPage": 2
     },
     {
       "q": "LLM RAG tutorial in:readme stars:>100",
       "perPage": 2
+    },
+    {
+      "q": "prompt engineering guide in:readme stars:>500",
+      "perPage": 1
     }
   ]
 }

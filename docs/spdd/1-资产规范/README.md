@@ -16,6 +16,7 @@
 
 | 模块 | 文件 | 状态来源 |
 | --- | --- | --- |
+| **Harness 模块地图（H01–H18）** | [404home-harness-modules.md](./404home-harness-modules.md) | analysis 20261125 |
 | 架构基线 | [404home-architecture.md](./404home-architecture.md) | overview + trial |
 | 工具详情 | [404home-tool-detail.md](./404home-tool-detail.md) | canvas 20261002 |
 | 相关推荐 | [404home-related-tools.md](./404home-related-tools.md) | canvas 20261006 |
@@ -23,11 +24,15 @@
 | C 端认证 | [404home-auth.md](./404home-auth.md) | canvas user-auth-p0 |
 | UAT / 用户评价 | [404home-uat-guide.md](./404home-uat-guide.md) | uat.local + UX review |
 | 钱包 / VIP | [404home-wallet.md](./404home-wallet.md) | admin-wallet + roadmap |
-| DeepSeek 对话计费 | [404home-deepseek-chat.md](./404home-deepseek-chat.md) | deepseek-chat-p2 |
+| DeepSeek 对话计费（含 SSE） | [404home-deepseek-chat.md](./404home-deepseek-chat.md) | deepseek-chat-p2 + trial-sse |
 | 后台会话审计 | [404home-admin-chats.md](./404home-admin-chats.md) | admin-chats |
 | 全站客服（话术+转人工） | [404home-customer-service.md](./404home-customer-service.md) | canvas 20261024 |
 | 站内访问量 | [404home-site-analytics.md](./404home-site-analytics.md) | canvas 20261024 |
+| 工具智能检索 RAG+MCP | [404home-tool-rag-mcp.md](./404home-tool-rag-mcp.md) | canvas 20261105 |
 | 试用产品纲领 | [404home-deepseek-trial.md](./404home-deepseek-trial.md) | roadmap（draft） |
+
+> 审查底稿：`docs/spdd/analysis/20261125-harness-module-requirements.md`。  
+> 已知缺独立规范：CMS 宿主(H02)、热门文章(H14)、UX 系列(H15)、ICP(H16)、作品集叙事(H17)。
 
 回填决策：`docs/spdd/2-adr决策/ADR-20261012-backfill-specs-by-module.md`  
 测试资产：`3-测试边界/` · `4-测试条例/`（见 `ADR-20261012-backfill-tests-by-module.md`）

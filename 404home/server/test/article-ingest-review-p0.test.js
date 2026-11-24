@@ -167,4 +167,29 @@ describe('article ingest review P0', () => {
       assert.ok(!banned.test(src), `${f} must not call source-platform write APIs`)
     }
   })
+
+  it('TC-08: INGEST_TOKEN can create pending_review without JWT', async () => {
+    process.env.INGEST_TOKEN = 'test-ingest-token-p0'
+    db.prepare(`DELETE FROM posts WHERE lifecycle = 'pending_review'`).run()
+    const r = await fetch(`${api.base}/api/posts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Ingest-Token': 'test-ingest-token-p0'
+      },
+      body: JSON.stringify({
+        type: 'news',
+        title: 'ingest-token-post',
+        summary: 's',
+        content: 'c',
+        topic: 'news',
+        source_url: 'https://example.com/ingest-token-only',
+        lifecycle: 'pending_review',
+        ingest: true
+      })
+    })
+    const data = await r.json()
+    assert.equal(r.status, 200)
+    assert.equal(data.lifecycle, 'pending_review')
+  })
 })

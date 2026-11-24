@@ -76,4 +76,5 @@ Cursor 侧：
 - 项目：`404home`（Vue 3 + Koa + SQLite AI 工具导航）
 - 部署备忘：`404home/deploy.local.md`（本地私密，已 gitignore）
 - 元 ADR：`2-adr决策/ADR-20261012-spdd-asset-layers.md`
+- **Harness 模块地图（H01–H18）**：`1-资产规范/404home-harness-modules.md` ← 审查底稿 `analysis/20261125-harness-module-requirements.md`
 - **进行中 · 工具 RAG + MCP**：`canvases/20261105-tool-rag-mcp-HANDOFF.md`（给外部 AI 粘贴）← `canvases/20261105-tool-rag-mcp.md` + `ADR-20261105-tool-rag-mcp.md`

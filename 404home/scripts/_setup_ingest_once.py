@@ -1,4 +1,4 @@
-"""One-shot: wire ingest env + first run + pm2 cron on production."""
+"""One-shot: set durable INGEST_TOKEN + sync config + verify ingest + pm2 cron."""
 import re
 from pathlib import Path
 
@@ -10,13 +10,11 @@ m = re.search(r"SSH 密码：`([^`]+)`", local_md)
 if not m:
     raise SystemExit("password not found in deploy.local.md")
 password = m.group(1)
-host = "111.230.147.223"
-user = "ubuntu"
-remote_root = "/var/www/404home"
 
 remote_script = r'''#!/usr/bin/env node
 const fs = require('fs')
 const path = require('path')
+const crypto = require('crypto')
 const { execSync } = require('child_process')
 
 const root = '/var/www/404home/server'
@@ -27,64 +25,75 @@ for (const line of envText.split(/\r?\n/)) {
   const m = line.match(/^([A-Z0-9_]+)=(.*)$/)
   if (m) env[m[1]] = m[2]
 }
-const user = env.ADMIN_USERNAME || 'admin'
-const pass = env.ADMIN_PASSWORD || 'admin123'
 
 async function main() {
-  const login = await fetch('http://127.0.0.1:3001/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: user, password: pass })
-  })
-  const body = await login.json()
-  if (!body.token) {
-    console.error('login failed', body)
-    process.exit(1)
+  let ingestToken = env.INGEST_TOKEN || ''
+  if (!ingestToken || ingestToken.length < 16) {
+    ingestToken = crypto.randomBytes(24).toString('hex')
   }
-  const token = body.token
-  console.log('jwt_ok len=' + token.length)
 
   const lines = envText.split(/\r?\n/).filter((l) => {
     return !/^PENDING_REVIEW_LIMIT=/.test(l)
       && !/^INGEST_API_BASE=/.test(l)
       && !/^INGEST_ADMIN_JWT=/.test(l)
       && !/^INGEST_CONFIG=/.test(l)
+      && !/^INGEST_TOKEN=/.test(l)
   })
   while (lines.length && lines[lines.length - 1] === '') lines.pop()
   lines.push('PENDING_REVIEW_LIMIT=20')
   lines.push('INGEST_API_BASE=http://127.0.0.1:3001')
-  lines.push('INGEST_ADMIN_JWT=' + token)
   lines.push('INGEST_CONFIG=./ingest/config.json')
+  lines.push('INGEST_TOKEN=' + ingestToken)
+  // keep ADMIN_* for fallback login; drop sticky JWT
   fs.writeFileSync(envPath, lines.join('\n') + '\n')
-  console.log('env_updated')
+  console.log('env_updated ingest_token_len=' + ingestToken.length)
 
   const cfg = path.join(root, 'ingest/config.json')
   const ex = path.join(root, 'ingest/config.example.json')
-  if (!fs.existsSync(cfg) && fs.existsSync(ex)) fs.copyFileSync(ex, cfg)
+  if (fs.existsSync(ex)) fs.copyFileSync(ex, cfg)
+  console.log('config_synced')
 
   execSync('pm2 restart 404home-api', { stdio: 'inherit' })
-  await new Promise((r) => setTimeout(r, 2000))
+  await new Promise((r) => setTimeout(r, 2500))
 
-  // load dotenv for child by exporting in shell
-  const ingest = execSync(
-    `INGEST_ADMIN_JWT='${token}' INGEST_API_BASE=http://127.0.0.1:3001 INGEST_CONFIG=./ingest/config.json node ingest/run.js`,
-    { cwd: root, encoding: 'utf8', timeout: 180000 }
-  )
+  const ingest = execSync('node ingest/run.js', {
+    cwd: root,
+    encoding: 'utf8',
+    timeout: 180000,
+    env: { ...process.env, ...Object.fromEntries(lines.map((l) => {
+      const i = l.indexOf('=')
+      return i > 0 ? [l.slice(0, i), l.slice(i + 1)] : [l, '']
+    }).filter(([k]) => k)) }
+  })
   console.log(ingest)
 
   try { execSync('pm2 delete 404home-ingest', { stdio: 'ignore' }) } catch (_) {}
-  // daily 01:00 UTC ≈ 09:00 CST
   execSync(
     'pm2 start ingest/run.js --name 404home-ingest --cron "0 1 * * *" --no-autorestart',
     { cwd: root, stdio: 'inherit' }
   )
   execSync('pm2 save', { stdio: 'inherit' })
 
-  const list = await fetch('http://127.0.0.1:3001/api/posts?all=1&lifecycle=pending_review', {
-    headers: { Authorization: 'Bearer ' + token }
+  // smoke: durable token can POST without JWT
+  const smoke = await fetch('http://127.0.0.1:3001/api/posts', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Ingest-Token': ingestToken
+    },
+    body: JSON.stringify({
+      type: 'news',
+      title: 'ingest-token-smoke-' + Date.now(),
+      summary: 'smoke',
+      content: 'smoke',
+      topic: 'news',
+      source_url: 'https://example.com/ingest-smoke-' + Date.now(),
+      lifecycle: 'pending_review',
+      ingest: true
+    })
   })
-  const posts = await list.json()
-  console.log('pending_count=' + (Array.isArray(posts) ? posts.length : JSON.stringify(posts)))
+  const smokeBody = await smoke.json().catch(() => ({}))
+  console.log('token_post_status=' + smoke.status + (smokeBody.id ? ' id=' + smokeBody.id : ''))
 }
 
 main().catch((e) => {
@@ -95,8 +104,14 @@ main().catch((e) => {
 
 client = paramiko.SSHClient()
 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-client.connect(host, username=user, password=password, timeout=30, allow_agent=False, look_for_keys=False)
-
+client.connect(
+    "111.230.147.223",
+    username="ubuntu",
+    password=password,
+    timeout=30,
+    allow_agent=False,
+    look_for_keys=False,
+)
 sftp = client.open_sftp()
 remote_path = "/tmp/404home-setup-ingest.js"
 with sftp.file(remote_path, "w") as f:
@@ -107,13 +122,11 @@ _, stdout, stderr = client.exec_command(f"node {remote_path}", get_pty=True, tim
 out = stdout.read().decode("utf-8", errors="replace")
 err = stderr.read().decode("utf-8", errors="replace")
 code = stdout.channel.recv_exit_status()
-log = root / "_ingest_setup_last.log"
-log.write_text(out + ("\nSTDERR:\n" + err if err.strip() else ""), encoding="utf-8")
-print(f"exit={code} log={log}")
+(root / "_ingest_setup_last.log").write_text(out + ("\nSTDERR:\n" + err if err.strip() else ""), encoding="utf-8")
 for line in out.splitlines():
-    low = line.lower()
-    if any(k in low for k in ("jwt", "env_", "pending", "ingest", "ok", "fail", "error", "posted", "skip", "cron", "404home")):
-        print(line.encode("ascii", "replace").decode("ascii"))
+    if "INGEST_TOKEN=" in line:
+        continue
+    print(line.encode("ascii", "replace").decode("ascii"))
 client.exec_command(f"rm -f {remote_path}")
 client.close()
 raise SystemExit(code)

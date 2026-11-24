@@ -48,9 +48,9 @@ function parseRssItems(xml, limit = 5) {
   return items
 }
 
-async function postIngest(apiBase, token, body) {
+async function postIngest(apiBase, jwtToken, body) {
   const headers = { 'Content-Type': 'application/json' }
-  if (token) headers.Authorization = `Bearer ${token}`
+  if (jwtToken) headers.Authorization = `Bearer ${jwtToken}`
   const ingestToken = process.env.INGEST_TOKEN
   if (ingestToken) headers['X-Ingest-Token'] = ingestToken
   const res = await fetch(`${apiBase.replace(/\/$/, '')}/api/posts`, {
@@ -62,17 +62,52 @@ async function postIngest(apiBase, token, body) {
   return { status: res.status, data }
 }
 
+/** Prefer static INGEST_TOKEN; else login with ADMIN_* each run (no stale JWT). */
+async function resolveAuth(apiBase) {
+  if (process.env.INGEST_TOKEN) {
+    console.log('[ingest] auth=INGEST_TOKEN')
+    return ''
+  }
+  const user = process.env.ADMIN_USERNAME
+  const pass = process.env.ADMIN_PASSWORD
+  if (user && pass) {
+    const res = await fetch(`${apiBase.replace(/\/$/, '')}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, password: pass })
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok || !data.token) {
+      throw new Error(`admin login failed: ${res.status} ${JSON.stringify(data)}`)
+    }
+    console.log('[ingest] auth=admin_login')
+    return data.token
+  }
+  if (process.env.INGEST_ADMIN_JWT) {
+    console.log('[ingest] auth=INGEST_ADMIN_JWT (legacy)')
+    return process.env.INGEST_ADMIN_JWT
+  }
+  throw new Error('set INGEST_TOKEN or ADMIN_USERNAME/PASSWORD')
+}
+
 async function main() {
   const cfg = loadConfig()
   const dailyLimit = Number(cfg.dailyLimit) || 5
+  const newsCap = Math.min(Number(cfg.newsLimit ?? cfg.newsMaxPerDay) || 3, dailyLimit)
+  const githubCap = Math.min(Number(cfg.githubLimit ?? cfg.githubMaxPerDay) || 2, dailyLimit)
   const apiBase = process.env.INGEST_API_BASE || 'http://127.0.0.1:3001'
-  const token = process.env.INGEST_ADMIN_JWT || ''
   let posted = 0
+  let newsPosted = 0
+  let githubPosted = 0
 
-  console.log(`[ingest] config=${configPath} dryRun=${dryRun} dailyLimit=${dailyLimit}`)
+  console.log(
+    `[ingest] config=${configPath} dryRun=${dryRun} dailyLimit=${dailyLimit} newsCap=${newsCap} githubCap=${githubCap}`
+  )
+
+  const token = dryRun ? '' : await resolveAuth(apiBase)
 
   for (const feed of cfg.newsFeeds || []) {
-    if (posted >= dailyLimit) break
+    if (posted >= dailyLimit || newsPosted >= newsCap) break
     try {
       if (dryRun) {
         console.log(`[ingest] dry-run would fetch news feed ${feed.url}`)
@@ -83,9 +118,9 @@ async function main() {
         continue
       }
       const xml = await fetchText(feed.url)
-      const items = parseRssItems(xml, dailyLimit - posted)
+      const items = parseRssItems(xml, Math.min(newsCap - newsPosted, dailyLimit - posted))
       for (const item of items) {
-        if (posted >= dailyLimit) break
+        if (posted >= dailyLimit || newsPosted >= newsCap) break
         const draft = assembleNewsDraft({
           title: item.title,
           summary: item.summary,
@@ -104,6 +139,7 @@ async function main() {
         }
         if (res.status >= 200 && res.status < 300) {
           posted += 1
+          newsPosted += 1
           console.log(`[ingest] news ok ${res.data.id} ${item.title}`)
         } else {
           console.log(`[ingest] news fail ${res.status}`, res.data)
@@ -115,14 +151,14 @@ async function main() {
   }
 
   for (const gq of cfg.githubQueries || []) {
-    if (posted >= dailyLimit) break
+    if (posted >= dailyLimit || githubPosted >= githubCap) break
     try {
       if (dryRun) {
         console.log(`[ingest] dry-run would GET api.github.com/search/repositories q=${gq.q}`)
         continue
       }
       const q = encodeURIComponent(gq.q)
-      const perPage = Math.min(Number(gq.perPage) || 5, dailyLimit - posted)
+      const perPage = Math.min(Number(gq.perPage) || 5, githubCap - githubPosted, dailyLimit - posted)
       // GET only — never star/fork/comment
       const url = `https://api.github.com/search/repositories?q=${q}&per_page=${perPage}`
       const headers = { Accept: 'application/vnd.github+json', 'User-Agent': '404home-silent-ingest' }
@@ -134,7 +170,7 @@ async function main() {
       }
       const json = await res.json()
       for (const repo of json.items || []) {
-        if (posted >= dailyLimit) break
+        if (posted >= dailyLimit || githubPosted >= githubCap) break
         let readme = ''
         try {
           const raw = `https://raw.githubusercontent.com/${repo.full_name}/${repo.default_branch || 'main'}/README.md`
@@ -157,6 +193,7 @@ async function main() {
         if (postedRes.status === 409) continue
         if (postedRes.status >= 200 && postedRes.status < 300) {
           posted += 1
+          githubPosted += 1
           console.log(`[ingest] github ok ${postedRes.data.id} ${repo.full_name}`)
         }
       }
@@ -165,7 +202,7 @@ async function main() {
     }
   }
 
-  console.log(`[ingest] done posted=${posted}`)
+  console.log(`[ingest] done posted=${posted} news=${newsPosted} github=${githubPosted}`)
 }
 
 main().catch((e) => {
