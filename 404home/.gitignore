@@ -11,9 +11,12 @@ node_modules
 deploy.local.md
 *.local.md
 !deploy.local.example.md
+!uat.local.example.md
 .tmp-*.js
 .tmp-ssh-test.js
 .tmp-deploy.js
+_deploy_bundle.tgz
+_deploy_last.log
 
 # Log files
 npm-debug.log*

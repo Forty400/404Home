@@ -67,6 +67,18 @@
           <label>标签（逗号分隔）</label>
           <input v-model="tagsText" />
         </div>
+        <div class="field">
+          <label>定价形态</label>
+          <input v-model="form.pricing" placeholder="如：免费增值 / 订阅制" />
+        </div>
+        <div class="field">
+          <label>地区可用性</label>
+          <input v-model="form.region_avail" placeholder="如：国内可用 / 海外为主" />
+        </div>
+        <div class="field">
+          <label>适合场景</label>
+          <input v-model="form.scenario" placeholder="如：快速生成 PPT" />
+        </div>
         <div class="checks">
           <label><input v-model="form.is_hot" type="checkbox" /> 热门</label>
           <label><input v-model="form.is_new" type="checkbox" /> 最新</label>
@@ -98,6 +110,9 @@ function emptyForm() {
     summary: '',
     url: '',
     category_id: null,
+    pricing: '',
+    region_avail: '',
+    scenario: '',
     is_hot: false,
     is_new: false,
     enabled: true,
@@ -139,6 +154,9 @@ export default {
         summary: tool.summary,
         url: tool.url,
         category_id: tool.category_id,
+        pricing: tool.pricing || '',
+        region_avail: tool.region_avail || '',
+        scenario: tool.scenario || '',
         is_hot: tool.is_hot,
         is_new: tool.is_new,
         enabled: tool.enabled,

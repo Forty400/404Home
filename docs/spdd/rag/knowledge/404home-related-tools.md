@@ -1,10 +1,12 @@
 ---
 title: 详情页相关工具推荐
 tags: [404home, frontend, tools]
-updated: 2026-10-06
+updated: 2026-10-12
 ---
 
 # 详情页相关工具推荐
+
+> 完整规范：`docs/spdd/1-资产规范/404home-related-tools.md`
 
 - 位置：`ToolDetail.vue` 主卡片下方
 - 数据：`GET /api/tools?category=<category_slug>&pageSize=8`

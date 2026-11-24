@@ -15,15 +15,46 @@
 
       <div v-if="!ready" class="card-panel state">加载中…</div>
 
-      <div v-else-if="!user" class="card-panel state">
-        <p>使用前请先登录或注册账号。会话记录会保存在服务器，换设备可继续查看。</p>
-        <div class="actions">
-          <RouterLink class="btn btn-primary" :to="{ name: 'user-login', query: { redirect: '/trial' } }">
-            登录
-          </RouterLink>
-          <RouterLink class="btn" :to="{ name: 'user-register', query: { redirect: '/trial' } }">
-            注册
-          </RouterLink>
+      <div v-else-if="!user" class="preview card-panel">
+        <div class="preview-copy">
+          <h2>先看能力，再登录试用</h2>
+          <p>
+            DeepSeek 对话按用量从钱包余额扣费。新账号默认额度上限约
+            <strong>¥3.00</strong>；会话保存在服务器，换设备可继续查看。
+          </p>
+          <ul class="quota-list">
+            <li>未登录不会调用模型，下方仅为示例对话</li>
+            <li>登录后即可发消息；余额不足时需管理员加额（作品集阶段无在线付款）</li>
+          </ul>
+          <div class="actions">
+            <button
+              type="button"
+              class="btn btn-primary"
+              @click="openLogin({ redirect: '/trial' })"
+            >
+              登录后试用
+            </button>
+            <button
+              type="button"
+              class="btn"
+              @click="openRegister({ redirect: '/trial' })"
+            >
+              注册
+            </button>
+          </div>
+        </div>
+        <div class="demo" aria-hidden="true">
+          <div class="bubble user">
+            <span class="role">我</span>
+            <p>用一句话解释什么是 RAG？</p>
+          </div>
+          <div class="bubble assistant">
+            <span class="role">助手</span>
+            <p>
+              RAG 是「检索增强生成」：先从你的文档里找出相关片段，再让模型基于这些证据回答，减少胡编。
+            </p>
+            <small class="cost">示例 · 不扣费</small>
+          </div>
         </div>
       </div>
 
@@ -93,8 +124,16 @@
               :disabled="sending"
               @keydown.enter.exact.prevent="send"
             />
+            <button
+              v-if="sending"
+              class="btn"
+              type="button"
+              @click="stopGenerate"
+            >
+              停止生成
+            </button>
             <button class="btn btn-primary" type="submit" :disabled="sending || !draft.trim()">
-              {{ sending ? '发送中…' : '发送' }}
+              {{ sending ? '生成中…' : '发送' }}
             </button>
           </form>
           <p v-if="notice" class="notice" :class="{ err: noticeIsError }">{{ notice }}</p>
@@ -106,184 +145,15 @@
 </template>
 
 <script>
-import { computed, nextTick, onMounted, ref } from 'vue'
-import { api, clearUserToken, getUserToken } from '@/api'
+import { useAuthModal } from '@/composables/useAuthModal'
+import { useTrialChat } from '@/composables/useTrialChat'
 
 export default {
   name: 'Trial',
   setup() {
-    const user = ref(null)
-    const ready = ref(false)
-    const draft = ref('')
-    const messages = ref([])
-    const sessions = ref([])
-    const sending = ref(false)
-    const notice = ref('')
-    const noticeIsError = ref(false)
-    const listEl = ref(null)
-    const sessionId = ref(null)
-    const modelHint = ref('桌面与手机浏览器可用')
-    const sidebarOpen = ref(false)
-    const loadingSession = ref(false)
-
-    const currentTitle = computed(() => {
-      if (!sessionId.value) return '新对话'
-      const s = sessions.value.find((x) => x.id === sessionId.value)
-      return s?.title || '对话'
-    })
-
-    function formatTime(raw) {
-      if (!raw) return ''
-      const s = String(raw)
-      // SQLite datetime('now') → "YYYY-MM-DD HH:MM:SS"
-      if (s.length >= 16) return s.slice(5, 16).replace('-', '/')
-      return s
-    }
-
-    async function scrollBottom() {
-      await nextTick()
-      if (listEl.value) listEl.value.scrollTop = listEl.value.scrollHeight
-    }
-
-    async function loadSessions() {
-      try {
-        const res = await api.chatSessions()
-        sessions.value = res.sessions || []
-      } catch {
-        sessions.value = []
-      }
-    }
-
-    async function openSession(id) {
-      if (loadingSession.value || sending.value) return
-      loadingSession.value = true
-      notice.value = ''
-      try {
-        const res = await api.chatMessages(id)
-        sessionId.value = id
-        messages.value = (res.messages || []).filter((m) => m.role !== 'system')
-        sidebarOpen.value = false
-        await scrollBottom()
-      } catch (e) {
-        noticeIsError.value = true
-        notice.value = e.message || '加载会话失败'
-      } finally {
-        loadingSession.value = false
-      }
-    }
-
-    function startNewChat() {
-      sessionId.value = null
-      messages.value = []
-      notice.value = ''
-      noticeIsError.value = false
-      sidebarOpen.value = false
-      draft.value = ''
-    }
-
-    async function removeSession(id) {
-      if (!window.confirm('确定删除该会话？')) return
-      try {
-        await api.chatDeleteSession(id)
-        if (sessionId.value === id) startNewChat()
-        await loadSessions()
-      } catch (e) {
-        noticeIsError.value = true
-        notice.value = e.message || '删除失败'
-      }
-    }
-
-    async function loadUser() {
-      if (!getUserToken()) {
-        user.value = null
-        ready.value = true
-        return
-      }
-      try {
-        const res = await api.userMe()
-        user.value = res.user
-        try {
-          const st = await api.chatStatus()
-          modelHint.value = st.configured
-            ? `模型 ${st.model} · 记录已存服务器`
-            : '服务端尚未配置 DEEPSEEK_API_KEY'
-        } catch {
-          /* ignore */
-        }
-        await loadSessions()
-        if (sessions.value.length) {
-          await openSession(sessions.value[0].id)
-        }
-      } catch {
-        clearUserToken()
-        user.value = null
-      } finally {
-        ready.value = true
-      }
-    }
-
-    async function send() {
-      const text = draft.value.trim()
-      if (!text || sending.value) return
-      notice.value = ''
-      noticeIsError.value = false
-      messages.value.push({ role: 'user', content: text })
-      draft.value = ''
-      sending.value = true
-      await scrollBottom()
-      try {
-        const res = await api.chatComplete({
-          message: text,
-          sessionId: sessionId.value
-        })
-        sessionId.value = res.sessionId
-        messages.value.push({
-          id: res.message.id,
-          role: 'assistant',
-          content: res.message.content,
-          cost_cents: res.message.cost_cents
-        })
-        if (res.user) user.value = res.user
-        if (res.charged_cents != null) {
-          notice.value = `已扣费 ¥${(res.charged_cents / 100).toFixed(2)}`
-        }
-        await loadSessions()
-      } catch (e) {
-        noticeIsError.value = true
-        notice.value = e.message || '发送失败'
-        if (e.data?.code === 'DEEPSEEK_NOT_CONFIGURED') {
-          notice.value = '服务端未配置 DEEPSEEK_API_KEY，请在 server/.env 中设置后重启 API'
-        }
-        if (e.data?.code === 'INSUFFICIENT_BALANCE') {
-          notice.value = '余额不足，请联系运营加额后再试'
-        }
-      } finally {
-        sending.value = false
-        await scrollBottom()
-      }
-    }
-
-    onMounted(loadUser)
-    return {
-      user,
-      ready,
-      draft,
-      messages,
-      sessions,
-      sending,
-      notice,
-      noticeIsError,
-      listEl,
-      sessionId,
-      modelHint,
-      sidebarOpen,
-      currentTitle,
-      formatTime,
-      startNewChat,
-      openSession,
-      removeSession,
-      send
-    }
+    const { openLogin, openRegister, tick } = useAuthModal()
+    const chat = useTrialChat({ authTick: tick })
+    return { ...chat, openLogin, openRegister }
   }
 }
 </script>
@@ -333,11 +203,48 @@ export default {
 .state {
   padding: 28px 22px;
 }
+.preview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  padding: 22px;
+  align-items: start;
+}
+.preview-copy h2 {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+  font-family: var(--font-display);
+}
+.preview-copy p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+.quota-list {
+  margin: 12px 0 0;
+  padding-left: 1.1rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+.demo {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 3%, var(--bg));
+  border: 1px solid var(--line);
+}
 .actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 14px;
+}
+@media (max-width: 800px) {
+  .preview {
+    grid-template-columns: 1fr;
+  }
 }
 .workspace {
   display: grid;

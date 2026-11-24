@@ -3,8 +3,100 @@ const { db } = require('../db')
 const { userRequired, authRequired } = require('../middleware/auth')
 const { getUser, publicUser, chargeChat } = require('../services/wallet')
 const { chatCompletions, getConfig, isConfigured } = require('../services/deepseek')
+const llm = require('../services/llm')
 
 const router = new Router({ prefix: '/api/chat' })
+
+function writeSse(res, obj) {
+  res.write(`data: ${JSON.stringify(obj)}\n\n`)
+}
+
+/** Shared preflight for completions + stream. Returns { user, text, providerId } or null after writing ctx error. */
+function preflightChat(ctx) {
+  const { message, provider: providerId } = ctx.request.body || {}
+  const text = String(message || '').trim()
+  if (!text) {
+    ctx.status = 400
+    ctx.body = { error: '消息不能为空', code: 'EMPTY_MESSAGE' }
+    return null
+  }
+  if (text.length > 8000) {
+    ctx.status = 400
+    ctx.body = { error: '消息过长', code: 'MESSAGE_TOO_LONG' }
+    return null
+  }
+
+  if (providerId) {
+    try {
+      llm.resolveProvider(providerId)
+    } catch (err) {
+      ctx.status = err.status || 400
+      ctx.body = { error: err.message || '无效的 provider', code: err.code || 'INVALID_PROVIDER' }
+      return null
+    }
+  }
+
+  const user = getUser(ctx.state.user.id)
+  if (!user) {
+    ctx.status = 401
+    ctx.body = { error: '用户不存在或已注销', code: 'USER_GONE' }
+    return null
+  }
+  if (user.balance_cents <= 0) {
+    ctx.status = 402
+    ctx.body = { error: '余额不足，请联系运营加额', code: 'INSUFFICIENT_BALANCE' }
+    return null
+  }
+  if (!isConfigured() && !llm.isConfigured(providerId)) {
+    ctx.status = 503
+    ctx.body = { error: 'DeepSeek API Key 未配置', code: 'DEEPSEEK_NOT_CONFIGURED' }
+    return null
+  }
+  if (providerId && !llm.isConfigured(providerId)) {
+    ctx.status = 503
+    ctx.body = { error: 'DeepSeek API Key 未配置', code: 'DEEPSEEK_NOT_CONFIGURED' }
+    return null
+  }
+
+  return { user, text, providerId: providerId || undefined }
+}
+
+function ensureSession(userId, sessionId, titleText) {
+  if (sessionId) {
+    const session = db
+      .prepare('SELECT * FROM chat_sessions WHERE id = ? AND user_id = ?')
+      .get(sessionId, userId)
+    if (!session) {
+      const err = new Error('会话不存在')
+      err.status = 404
+      err.code = 'SESSION_NOT_FOUND'
+      throw err
+    }
+    return session
+  }
+  const title = titleText.slice(0, 40)
+  const info = db
+    .prepare('INSERT INTO chat_sessions (user_id, title) VALUES (?, ?)')
+    .run(userId, title)
+  return db.prepare('SELECT * FROM chat_sessions WHERE id = ?').get(info.lastInsertRowid)
+}
+
+function buildApiMessages(sessionId, text) {
+  const maxHistory = getConfig().maxHistory
+  const history = db
+    .prepare(
+      `SELECT role, content FROM chat_messages
+       WHERE session_id = ? AND role IN ('user', 'assistant')
+       ORDER BY id DESC LIMIT ?`
+    )
+    .all(sessionId, maxHistory)
+    .reverse()
+  return [
+    { role: 'system', content: '你是 404Home 提供的 DeepSeek 试用助手，回答简洁有用。' },
+    ...history,
+    { role: 'user', content: text }
+  ]
+}
 
 /** Admin: usage summary + top users */
 router.get('/admin/summary', authRequired, async (ctx) => {
@@ -115,9 +207,12 @@ router.get('/admin/sessions/:id', authRequired, async (ctx) => {
 
 
 router.get('/status', userRequired, async (ctx) => {
+  const st = llm.getStatus()
   ctx.body = {
-    configured: isConfigured(),
-    model: getConfig().model
+    configured: st.configured,
+    model: st.model,
+    provider: st.provider,
+    providers: st.providers
   }
 })
 
@@ -164,69 +259,21 @@ router.delete('/sessions/:id', userRequired, async (ctx) => {
 })
 
 router.post('/completions', userRequired, async (ctx) => {
-  const { message, sessionId } = ctx.request.body || {}
-  const text = String(message || '').trim()
-  if (!text) {
-    ctx.status = 400
-    ctx.body = { error: '消息不能为空', code: 'EMPTY_MESSAGE' }
-    return
-  }
-  if (text.length > 8000) {
-    ctx.status = 400
-    ctx.body = { error: '消息过长', code: 'MESSAGE_TOO_LONG' }
-    return
-  }
-
-  const user = getUser(ctx.state.user.id)
-  if (!user) {
-    ctx.status = 401
-    ctx.body = { error: '用户不存在或已注销', code: 'USER_GONE' }
-    return
-  }
-  if (user.balance_cents <= 0) {
-    ctx.status = 402
-    ctx.body = { error: '余额不足，请联系运营加额', code: 'INSUFFICIENT_BALANCE' }
-    return
-  }
-  if (!isConfigured()) {
-    ctx.status = 503
-    ctx.body = { error: 'DeepSeek API Key 未配置', code: 'DEEPSEEK_NOT_CONFIGURED' }
-    return
-  }
+  const pf = preflightChat(ctx)
+  if (!pf) return
+  const { user, text, providerId } = pf
+  const { sessionId } = ctx.request.body || {}
 
   let session
-  if (sessionId) {
-    session = db
-      .prepare('SELECT * FROM chat_sessions WHERE id = ? AND user_id = ?')
-      .get(sessionId, user.id)
-    if (!session) {
-      ctx.status = 404
-      ctx.body = { error: '会话不存在', code: 'SESSION_NOT_FOUND' }
-      return
-    }
-  } else {
-    const title = text.slice(0, 40)
-    const info = db
-      .prepare('INSERT INTO chat_sessions (user_id, title) VALUES (?, ?)')
-      .run(user.id, title)
-    session = db.prepare('SELECT * FROM chat_sessions WHERE id = ?').get(info.lastInsertRowid)
+  try {
+    session = ensureSession(user.id, sessionId, text)
+  } catch (err) {
+    ctx.status = err.status || 404
+    ctx.body = { error: err.message, code: err.code || 'SESSION_NOT_FOUND' }
+    return
   }
 
-  const maxHistory = getConfig().maxHistory
-  const history = db
-    .prepare(
-      `SELECT role, content FROM chat_messages
-       WHERE session_id = ? AND role IN ('user', 'assistant')
-       ORDER BY id DESC LIMIT ?`
-    )
-    .all(session.id, maxHistory)
-    .reverse()
-
-  const apiMessages = [
-    { role: 'system', content: '你是 404Home 提供的 DeepSeek 试用助手，回答简洁有用。' },
-    ...history,
-    { role: 'user', content: text }
-  ]
+  const apiMessages = buildApiMessages(session.id, text)
 
   db.prepare(
     `INSERT INTO chat_messages (session_id, role, content) VALUES (?, 'user', ?)`
@@ -234,7 +281,9 @@ router.post('/completions', userRequired, async (ctx) => {
 
   let result
   try {
-    result = await chatCompletions(apiMessages)
+    result = providerId
+      ? await llm.chat({ provider: providerId, messages: apiMessages })
+      : await chatCompletions(apiMessages)
   } catch (err) {
     ctx.status = err.status || 502
     ctx.body = { error: err.message || '上游调用失败', code: err.code || 'DEEPSEEK_UPSTREAM' }
@@ -280,6 +329,130 @@ router.post('/completions', userRequired, async (ctx) => {
     },
     charged_cents: charged.charged_cents,
     user: publicUser(charged.user || getUser(user.id))
+  }
+})
+
+router.post('/completions/stream', userRequired, async (ctx) => {
+  const pf = preflightChat(ctx)
+  if (!pf) return
+  const { user, text, providerId } = pf
+  const { sessionId } = ctx.request.body || {}
+
+  let session
+  try {
+    session = ensureSession(user.id, sessionId, text)
+  } catch (err) {
+    ctx.status = err.status || 404
+    ctx.body = { error: err.message, code: err.code || 'SESSION_NOT_FOUND' }
+    return
+  }
+
+  const apiMessages = buildApiMessages(session.id, text)
+
+  db.prepare(
+    `INSERT INTO chat_messages (session_id, role, content) VALUES (?, 'user', ?)`
+  ).run(session.id, text)
+
+  ctx.status = 200
+  ctx.set({
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache, no-transform',
+    Connection: 'keep-alive'
+  })
+  ctx.respond = false
+
+  const res = ctx.res
+  const ac = new AbortController()
+  const onClose = () => {
+    try {
+      ac.abort()
+    } catch {
+      /* ignore */
+    }
+  }
+  ctx.req.on('close', onClose)
+
+  try {
+    writeSse(res, { type: 'meta', sessionId: session.id })
+
+    let result = null
+    for await (const ev of llm.chatStream({
+      provider: providerId,
+      messages: apiMessages,
+      signal: ac.signal
+    })) {
+      if (ev.type === 'delta') {
+        writeSse(res, { type: 'delta', content: ev.content })
+      } else if (ev.type === 'result') {
+        result = ev
+      }
+    }
+
+    if (!result || !result.content) {
+      writeSse(res, {
+        type: 'error',
+        error: '上游无内容',
+        code: 'DEEPSEEK_UPSTREAM'
+      })
+      return
+    }
+
+    const assistantInfo = db
+      .prepare(
+        `INSERT INTO chat_messages
+          (session_id, role, content, prompt_tokens, completion_tokens, cost_cents)
+         VALUES (?, 'assistant', ?, ?, ?, ?)`
+      )
+      .run(
+        session.id,
+        result.content,
+        result.usage.prompt_tokens,
+        result.usage.completion_tokens,
+        result.cost_cents
+      )
+
+    let charged = { user, charged_cents: 0 }
+    try {
+      charged = chargeChat(user.id, result.cost_cents, `msg_${assistantInfo.lastInsertRowid}`)
+    } catch (err) {
+      if (err.code !== 'INSUFFICIENT_BALANCE') throw err
+    }
+
+    db.prepare(
+      `UPDATE chat_sessions SET updated_at = datetime('now'), title = CASE
+         WHEN title = '新对话' THEN ? ELSE title END WHERE id = ?`
+    ).run(text.slice(0, 40), session.id)
+
+    writeSse(res, {
+      type: 'done',
+      message: {
+        id: assistantInfo.lastInsertRowid,
+        role: 'assistant',
+        content: result.content,
+        prompt_tokens: result.usage.prompt_tokens,
+        completion_tokens: result.usage.completion_tokens,
+        cost_cents: result.cost_cents
+      },
+      charged_cents: charged.charged_cents,
+      user: publicUser(charged.user || getUser(user.id))
+    })
+  } catch (err) {
+    try {
+      writeSse(res, {
+        type: 'error',
+        error: err.message || '上游调用失败',
+        code: err.code || 'DEEPSEEK_UPSTREAM'
+      })
+    } catch {
+      /* ignore write after close */
+    }
+  } finally {
+    ctx.req.off('close', onClose)
+    try {
+      res.end()
+    } catch {
+      /* ignore */
+    }
   }
 })
 

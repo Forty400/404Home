@@ -11,6 +11,7 @@
           <tr>
             <th>标题</th>
             <th>类型</th>
+            <th>专题</th>
             <th>状态</th>
             <th>时间</th>
             <th>操作</th>
@@ -23,6 +24,7 @@
               <div class="sub">{{ post.summary }}</div>
             </td>
             <td>{{ post.type === 'news' ? '资讯' : '教程' }}</td>
+            <td>{{ topicLabel(post.topic) }}{{ post.is_hot ? ' · 热' : '' }}</td>
             <td>{{ post.published ? '已发布' : '草稿' }}</td>
             <td>{{ post.created_at }}</td>
             <td class="actions">
@@ -45,6 +47,15 @@
           </select>
         </div>
         <div class="field">
+          <label>专题</label>
+          <select v-model="form.topic">
+            <option value="plugin">AI 插件</option>
+            <option value="dev">AI 开发</option>
+            <option value="method">AI 方法论</option>
+            <option value="news">AI 新闻</option>
+          </select>
+        </div>
+        <div class="field">
           <label>标题</label>
           <input v-model="form.title" required />
         </div>
@@ -53,9 +64,22 @@
           <textarea v-model="form.summary" />
         </div>
         <div class="field">
+          <label>封面 URL</label>
+          <input v-model="form.cover" placeholder="/covers/hot-01.svg" />
+        </div>
+        <div class="field">
+          <label>出处名称</label>
+          <input v-model="form.source_name" />
+        </div>
+        <div class="field">
+          <label>出处链接</label>
+          <input v-model="form.source_url" type="url" />
+        </div>
+        <div class="field">
           <label>正文</label>
           <textarea v-model="form.content" class="long" />
         </div>
+        <label class="check"><input v-model="form.is_hot" type="checkbox" /> 热门</label>
         <label class="check"><input v-model="form.published" type="checkbox" /> 发布</label>
         <p v-if="error" class="error">{{ error }}</p>
         <div class="actions">
@@ -71,15 +95,31 @@
 import { onMounted, reactive, ref } from 'vue'
 import { api } from '@/api'
 
+const TOPIC_LABELS = {
+  plugin: '插件',
+  dev: '开发',
+  method: '方法论',
+  news: '新闻'
+}
+
 function emptyForm() {
   return {
     id: null,
     type: 'news',
+    topic: 'news',
     title: '',
     summary: '',
     content: '',
+    cover: '',
+    source_name: '',
+    source_url: '',
+    is_hot: false,
     published: true
   }
+}
+
+function topicLabel(topic) {
+  return TOPIC_LABELS[topic] || topic || '—'
 }
 
 export default {
@@ -104,9 +144,14 @@ export default {
       Object.assign(form, {
         id: post.id,
         type: post.type,
+        topic: post.topic || 'news',
         title: post.title,
         summary: post.summary,
         content: post.content,
+        cover: post.cover || '',
+        source_name: post.source_name || '',
+        source_url: post.source_url || '',
+        is_hot: !!post.is_hot,
         published: post.published
       })
       error.value = ''
@@ -132,7 +177,7 @@ export default {
     }
 
     onMounted(load)
-    return { posts, showForm, form, error, openCreate, openEdit, save, remove }
+    return { posts, showForm, form, error, openCreate, openEdit, save, remove, topicLabel }
   }
 }
 </script>

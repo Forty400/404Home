@@ -1,6 +1,10 @@
 <template>
   <div class="page container">
-    <p v-if="loading" class="empty">加载中...</p>
+    <div v-if="loading" class="skeleton-stack" aria-busy="true" aria-label="加载工具详情">
+      <div class="skeleton skeleton-detail" />
+      <div class="skeleton skeleton-line" />
+      <div class="skeleton skeleton-line w60" />
+    </div>
     <template v-else-if="tool">
       <article class="card-panel detail">
         <div class="head">
@@ -15,6 +19,20 @@
           </div>
         </div>
         <p class="summary">{{ tool.summary }}</p>
+        <dl v-if="hasDecision" class="decision">
+          <div v-if="tool.pricing">
+            <dt>定价</dt>
+            <dd>{{ tool.pricing }}</dd>
+          </div>
+          <div v-if="tool.region_avail">
+            <dt>地区</dt>
+            <dd>{{ tool.region_avail }}</dd>
+          </div>
+          <div v-if="tool.scenario">
+            <dt>适合</dt>
+            <dd>{{ tool.scenario }}</dd>
+          </div>
+        </dl>
         <div class="tags" v-if="tool.tags && tool.tags.length">
           <span v-for="tag in tool.tags" :key="tag">{{ tag }}</span>
         </div>
@@ -33,9 +51,9 @@
           <RouterLink class="btn btn-ghost" to="/">返回首页</RouterLink>
         </div>
       </article>
-      <section v-if="related.length" class="related">
+      <section v-if="related.length >= 2" class="related">
         <div class="section-title">
-          <h2>相关工具</h2>
+          <h2>对比相关工具</h2>
           <RouterLink v-if="tool.category_slug" :to="`/category/${tool.category_slug}`">查看更多</RouterLink>
         </div>
         <div class="tool-grid">
@@ -44,8 +62,9 @@
       </section>
     </template>
     <div v-else class="empty card-panel miss">
-      <p>工具不存在或已下线</p>
-      <RouterLink class="btn btn-primary" to="/">返回首页</RouterLink>
+      <p>{{ loadError || '工具不存在或已下线' }}</p>
+      <button class="btn btn-primary" type="button" @click="load">重试</button>
+      <RouterLink class="btn btn-ghost" to="/">返回首页</RouterLink>
     </div>
   </div>
 </template>
@@ -64,8 +83,13 @@ export default {
     const tool = ref(null)
     const related = ref([])
     const loading = ref(true)
+    const loadError = ref('')
 
     const initials = computed(() => (tool.value?.name || '?').slice(0, 1).toUpperCase())
+    const hasDecision = computed(() => {
+      const t = tool.value
+      return !!(t && (t.pricing || t.region_avail || t.scenario))
+    })
 
     async function loadRelated(current) {
       related.value = []
@@ -87,11 +111,16 @@ export default {
       loading.value = true
       tool.value = null
       related.value = []
+      loadError.value = ''
       try {
         tool.value = await api.getTool(route.params.slug)
+        if (tool.value?.name) {
+          document.title = `${tool.value.name} · 404Home`
+        }
         await loadRelated(tool.value)
-      } catch {
+      } catch (e) {
         tool.value = null
+        loadError.value = e?.status === 404 ? '' : '加载失败，请重试'
       } finally {
         loading.value = false
       }
@@ -100,7 +129,7 @@ export default {
     onMounted(load)
     watch(() => route.params.slug, load)
 
-    return { tool, related, loading, initials }
+    return { tool, related, loading, loadError, initials, hasDecision, load }
   }
 }
 </script>
@@ -152,6 +181,30 @@ h1 {
   color: var(--ink-soft);
   line-height: 1.7;
   font-size: 1.02rem;
+}
+.decision {
+  margin: 0 0 16px;
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 4%, var(--bg-elevated));
+}
+.decision > div {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+.decision dt {
+  margin: 0;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+.decision dd {
+  margin: 0;
+  color: var(--ink);
 }
 .tags {
   display: flex;

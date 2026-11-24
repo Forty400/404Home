@@ -1,5 +1,6 @@
 const ADMIN_TOKEN_KEY = '404home_admin_token'
 const USER_TOKEN_KEY = '404home_user_token'
+const CS_GUEST_TOKEN_KEY = '404home_cs_guest_token'
 
 export function getToken() {
   return localStorage.getItem(ADMIN_TOKEN_KEY) || ''
@@ -25,12 +26,30 @@ export function clearUserToken() {
   localStorage.removeItem(USER_TOKEN_KEY)
 }
 
+export function getCsGuestToken() {
+  return localStorage.getItem(CS_GUEST_TOKEN_KEY) || ''
+}
+
+export function setCsGuestToken(token) {
+  localStorage.setItem(CS_GUEST_TOKEN_KEY, token)
+}
+
+/** Logged-in user token, else guest CS token */
+export function getCsToken() {
+  return getUserToken() || getCsGuestToken()
+}
+
 async function request(path, options = {}) {
   const headers = {
     'Content-Type': 'application/json',
     ...(options.headers || {})
   }
-  const token = options.userAuth ? getUserToken() : getToken()
+  const token =
+    options.token !== undefined
+      ? options.token
+      : options.userAuth
+        ? getUserToken()
+        : getToken()
   if (token) headers.Authorization = `Bearer ${token}`
 
   const res = await fetch(`/api${path}`, {
@@ -62,6 +81,7 @@ export const api = {
     ).toString()
     return request(`/tools${qs ? `?${qs}` : ''}`)
   },
+  smartSearch: (body) => request('/smart-search', { method: 'POST', body, token: '' }),
   getGroupedTools: () => request('/tools/grouped'),
   getTool: (idOrSlug) => request(`/tools/${idOrSlug}`),
   createTool: (body) => request('/tools', { method: 'POST', body }),
@@ -82,6 +102,13 @@ export const api = {
   login: (body) => request('/auth/login', { method: 'POST', body }),
   me: () => request('/auth/me'),
   getStats: () => request('/stats'),
+  getTraffic: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
+    ).toString()
+    return request(`/stats/traffic${qs ? `?${qs}` : ''}`)
+  },
+  trackPageview: (body) => request('/analytics/pageview', { method: 'POST', body, token: '' }),
 
   getCaptcha: () => request('/user/captcha'),
   userRegister: (body) => request('/user/register', { method: 'POST', body }),
@@ -94,6 +121,82 @@ export const api = {
   chatDeleteSession: (sessionId) =>
     request(`/chat/sessions/${sessionId}`, { method: 'DELETE', userAuth: true }),
   chatComplete: (body) => request('/chat/completions', { method: 'POST', body, userAuth: true }),
+
+  /**
+   * SSE stream: calls onEvent({type, ...}) for meta/delta/done/error.
+   * Returns the final done payload (or throws on HTTP/error event).
+   */
+  chatCompleteStream: async (body, { signal, onEvent } = {}) => {
+    const headers = {
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream'
+    }
+    const token = getUserToken()
+    if (token) headers.Authorization = `Bearer ${token}`
+
+    const res = await fetch('/api/chat/completions/stream', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal
+    })
+
+    const contentType = res.headers.get('content-type') || ''
+    if (!contentType.includes('text/event-stream')) {
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        const err = new Error(data.error || `请求失败 (${res.status})`)
+        err.status = res.status
+        err.data = data
+        throw err
+      }
+      return data
+    }
+
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    let donePayload = null
+
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const chunks = buffer.split('\n\n')
+      buffer = chunks.pop() || ''
+      for (const block of chunks) {
+        const line = block
+          .split('\n')
+          .map((l) => l.trim())
+          .find((l) => l.startsWith('data:'))
+        if (!line) continue
+        const raw = line.slice(5).trim()
+        if (!raw || raw === '[DONE]') continue
+        let ev
+        try {
+          ev = JSON.parse(raw)
+        } catch {
+          continue
+        }
+        if (onEvent) onEvent(ev)
+        if (ev.type === 'done') donePayload = ev
+        if (ev.type === 'error') {
+          const err = new Error(ev.error || '流式失败')
+          err.status = 502
+          err.data = { code: ev.code, error: ev.error }
+          throw err
+        }
+      }
+    }
+
+    if (!donePayload) {
+      const err = new Error('流式未完成')
+      err.status = 502
+      err.data = { code: 'STREAM_INCOMPLETE' }
+      throw err
+    }
+    return donePayload
+  },
 
   adminChatSummary: () => request('/chat/admin/summary'),
   adminChatSessions: (params = {}) => {
@@ -110,5 +213,32 @@ export const api = {
     ).toString()
     return request(`/wallet/users${qs ? `?${qs}` : ''}`)
   },
-  adminCredit: (body) => request('/wallet/admin-credit', { method: 'POST', body })
+  adminCredit: (body) => request('/wallet/admin-credit', { method: 'POST', body }),
+
+  csGuest: () => request('/cs/guest', { method: 'POST', body: {} }),
+  csFaqs: () => request('/cs/scripts/faq', { token: '' }),
+  csOpenSession: () => request('/cs/sessions', { method: 'POST', body: {}, token: getCsToken() }),
+  csMessages: (id) => request(`/cs/sessions/${id}/messages`, { token: getCsToken() }),
+  csSend: (id, content) =>
+    request(`/cs/sessions/${id}/messages`, {
+      method: 'POST',
+      body: { content },
+      token: getCsToken()
+    }),
+  csTransfer: (id) =>
+    request(`/cs/sessions/${id}/transfer`, { method: 'POST', body: {}, token: getCsToken() }),
+
+  csAdminInbox: () => request('/cs/admin/inbox'),
+  csAdminSession: (id) => request(`/cs/admin/sessions/${id}`),
+  csAdminReply: (id, content) =>
+    request(`/cs/admin/sessions/${id}/messages`, { method: 'POST', body: { content } }),
+  csAdminPresenceGet: () => request('/cs/admin/presence'),
+  csAdminPresenceSet: (online) =>
+    request('/cs/admin/presence', { method: 'POST', body: { online } }),
+  csAdminScripts: () => request('/cs/admin/scripts'),
+  csAdminCreateScript: (body) => request('/cs/admin/scripts', { method: 'POST', body }),
+  csAdminUpdateScript: (id, body) => request(`/cs/admin/scripts/${id}`, { method: 'PUT', body }),
+  csAdminDeleteScript: (id) => request(`/cs/admin/scripts/${id}`, { method: 'DELETE' }),
+  csAdminSettings: () => request('/cs/admin/settings'),
+  csAdminPutSettings: (body) => request('/cs/admin/settings', { method: 'PUT', body })
 }

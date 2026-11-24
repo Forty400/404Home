@@ -122,6 +122,9 @@ router.post('/', authRequired, async (ctx) => {
     icon = '',
     category_id = null,
     tags = [],
+    pricing = '',
+    region_avail = '',
+    scenario = '',
     is_hot = false,
     is_new = false,
     enabled = true,
@@ -138,8 +141,8 @@ router.post('/', authRequired, async (ctx) => {
     const result = db
       .prepare(
         `INSERT INTO tools
-        (name, slug, summary, url, icon, category_id, tags, is_hot, is_new, enabled, sort)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        (name, slug, summary, url, icon, category_id, tags, pricing, region_avail, scenario, is_hot, is_new, enabled, sort)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         name,
@@ -149,6 +152,9 @@ router.post('/', authRequired, async (ctx) => {
         icon,
         category_id,
         JSON.stringify(tags || []),
+        pricing || '',
+        region_avail || '',
+        scenario || '',
         is_hot ? 1 : 0,
         is_new ? 1 : 0,
         enabled ? 1 : 0,
@@ -185,6 +191,10 @@ router.put('/:id', authRequired, async (ctx) => {
     icon: body.icon ?? existing.icon,
     category_id: body.category_id !== undefined ? body.category_id : existing.category_id,
     tags: body.tags !== undefined ? JSON.stringify(body.tags) : existing.tags,
+    pricing: body.pricing !== undefined ? body.pricing : existing.pricing || '',
+    region_avail:
+      body.region_avail !== undefined ? body.region_avail : existing.region_avail || '',
+    scenario: body.scenario !== undefined ? body.scenario : existing.scenario || '',
     is_hot: body.is_hot !== undefined ? (body.is_hot ? 1 : 0) : existing.is_hot,
     is_new: body.is_new !== undefined ? (body.is_new ? 1 : 0) : existing.is_new,
     enabled: body.enabled !== undefined ? (body.enabled ? 1 : 0) : existing.enabled,
@@ -193,7 +203,7 @@ router.put('/:id', authRequired, async (ctx) => {
   try {
     db.prepare(
       `UPDATE tools SET name=?, slug=?, summary=?, url=?, icon=?, category_id=?,
-       tags=?, is_hot=?, is_new=?, enabled=?, sort=? WHERE id=?`
+       tags=?, pricing=?, region_avail=?, scenario=?, is_hot=?, is_new=?, enabled=?, sort=? WHERE id=?`
     ).run(
       next.name,
       next.slug,
@@ -202,6 +212,9 @@ router.put('/:id', authRequired, async (ctx) => {
       next.icon,
       next.category_id,
       next.tags,
+      next.pricing,
+      next.region_avail,
+      next.scenario,
       next.is_hot,
       next.is_new,
       next.enabled,

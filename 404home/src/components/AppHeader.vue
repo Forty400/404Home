@@ -17,39 +17,80 @@
         <span />
       </button>
       <nav class="nav" :class="{ open: navOpen }">
-        <RouterLink to="/" @click="navOpen = false">工具集</RouterLink>
+        <RouterLink
+          to="/"
+          active-class=""
+          exact-active-class="router-link-active"
+          @click="navOpen = false"
+        >首页</RouterLink>
         <RouterLink to="/trial" @click="navOpen = false">DeepSeek 试用</RouterLink>
+        <RouterLink to="/smart-search" @click="navOpen = false">智能检索</RouterLink>
         <RouterLink to="/news" @click="navOpen = false">每日资讯</RouterLink>
         <RouterLink to="/tutorials" @click="navOpen = false">教程资源</RouterLink>
         <RouterLink to="/about" @click="navOpen = false">关于</RouterLink>
+        <div class="nav-auth">
+          <template v-if="userEmail">
+            <span class="user-chip" :title="userEmail">{{ userEmail }}</span>
+            <button type="button" class="text-btn" @click="logout(); navOpen = false">退出</button>
+          </template>
+          <template v-else>
+            <button
+              type="button"
+              class="text-link"
+              @click="openLogin(); navOpen = false"
+            >登录</button>
+            <button
+              type="button"
+              class="text-link accent"
+              @click="openRegister(); navOpen = false"
+            >注册</button>
+          </template>
+        </div>
       </nav>
       <div class="header-actions">
         <button
           type="button"
-          class="theme-switch"
+          class="theme-bulb"
+          :class="{ on: resolved === 'light' }"
           role="switch"
           :aria-checked="resolved === 'dark' ? 'true' : 'false'"
           :aria-label="themeAriaLabel"
           :title="themeTitle"
           @click="toggleLightDark"
         >
-          <span class="theme-switch-track" aria-hidden="true">
-            <span class="theme-switch-thumb" />
-          </span>
-          <span class="theme-switch-text">{{ resolved === 'dark' ? '暗色' : '亮色' }}</span>
+          <svg class="bulb-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              class="bulb-glow"
+              d="M9 21h6M10 17h4M12 3a6 6 0 0 0-3.5 10.8c.6.45 1 1.1 1 1.85V17h5v-1.35c0-.75.4-1.4 1-1.85A6 6 0 0 0 12 3z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              class="bulb-rays"
+              d="M12 1v1.2M4.6 6.2l.9.9M1.8 12H3M4.6 17.8l.9-.9M19.4 6.2l-.9.9M21 12h-1.2M19.4 17.8l-.9-.9"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+          </svg>
         </button>
-        <template v-if="userEmail">
-          <span class="user-chip" :title="userEmail">{{ userEmail }}</span>
-          <button type="button" class="text-btn" @click="logout">退出</button>
-        </template>
-        <template v-else>
-          <RouterLink class="text-link" to="/login">登录</RouterLink>
-          <RouterLink class="text-link accent" to="/register">注册</RouterLink>
-        </template>
-        <RouterLink class="admin-link" to="/admin">管理</RouterLink>
+        <div class="auth-inline">
+          <template v-if="userEmail">
+            <span class="user-chip" :title="userEmail">{{ userEmail }}</span>
+            <button type="button" class="text-btn" @click="logout">退出</button>
+          </template>
+          <template v-else>
+            <button type="button" class="text-link" @click="openLogin()">登录</button>
+            <button type="button" class="text-link accent" @click="openRegister()">注册</button>
+          </template>
+        </div>
       </div>
     </div>
-    <div class="container">
+    <div v-if="showCategoryNav" class="container">
       <CategoryNav :categories="categories" />
     </div>
   </header>
@@ -60,7 +101,9 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { api, clearUserToken, getUserToken } from '@/api'
 import CategoryNav from '@/components/CategoryNav.vue'
+import { useAuthModal } from '@/composables/useAuthModal'
 import { useTheme } from '@/composables/useTheme'
+import { shouldShowCategoryNav } from '@/utils/shouldShowCategoryNav'
 
 export default {
   name: 'AppHeader',
@@ -69,8 +112,12 @@ export default {
     const route = useRoute()
     const categories = ref([])
     const navOpen = ref(false)
+    const showCategoryNav = computed(() =>
+      shouldShowCategoryNav(route.name, { navOpen: navOpen.value })
+    )
     const userEmail = ref('')
     const { preference, resolved, setTheme } = useTheme()
+    const { openLogin, openRegister, tick } = useAuthModal()
 
     function toggleLightDark() {
       setTheme(resolved.value === 'dark' ? 'light' : 'dark')
@@ -78,13 +125,15 @@ export default {
 
     const themeTitle = computed(() => {
       if (preference.value === 'system') {
-        return `跟随系统（当前${resolved.value === 'dark' ? '暗色' : '亮色'}），点击切换亮/暗色`
+        return `跟随系统（当前${resolved.value === 'dark' ? '暗色' : '亮色'}）。亮灯=亮色，灭灯=暗色`
       }
-      return resolved.value === 'dark' ? '暗色模式，点击切换为亮色' : '亮色模式，点击切换为暗色'
+      return resolved.value === 'dark'
+        ? '暗色模式（灯灭），点击切换为亮色'
+        : '亮色模式（灯亮），点击切换为暗色'
     })
     const themeAriaLabel = computed(() => {
       const next = resolved.value === 'dark' ? '亮色' : '暗色'
-      return `主题开关，当前${resolved.value === 'dark' ? '暗色' : '亮色'}，点击切换为${next}`
+      return `主题灯泡，当前${resolved.value === 'dark' ? '暗色' : '亮色'}，点击切换为${next}`
     })
 
     async function refreshUser() {
@@ -126,15 +175,22 @@ export default {
       }
     )
 
+    watch(tick, () => {
+      refreshUser()
+    })
+
     return {
       categories,
       navOpen,
+      showCategoryNav,
       userEmail,
       logout,
       resolved,
       themeTitle,
       themeAriaLabel,
-      toggleLightDark
+      toggleLightDark,
+      openLogin,
+      openRegister
     }
   }
 }
@@ -153,9 +209,17 @@ export default {
 .header-inner {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 14px 0 8px;
+  gap: 12px;
+  padding: 10px 0 6px;
   flex-wrap: wrap;
+}
+
+.nav-auth {
+  display: none;
+}
+
+.auth-inline {
+  display: contents;
 }
 
 .brand {
@@ -211,8 +275,7 @@ export default {
 }
 
 .text-link,
-.text-btn,
-.admin-link {
+.text-btn {
   font-size: 0.88rem;
   color: var(--ink-soft);
   background: none;
@@ -226,56 +289,42 @@ export default {
   font-weight: 600;
 }
 
-.theme-switch {
+.theme-bulb {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
   border: 1px solid var(--line);
-  border-radius: 999px;
   background: var(--bg-elevated);
-  padding: 4px 10px 4px 4px;
-  cursor: pointer;
   color: var(--ink-soft);
-  font-size: 0.82rem;
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
 }
 
-.theme-switch:hover {
+.theme-bulb:hover {
   border-color: var(--accent);
   color: var(--accent);
 }
 
-.theme-switch-track {
-  position: relative;
-  width: 36px;
+.theme-bulb.on {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+}
+
+.bulb-icon {
+  width: 20px;
   height: 20px;
-  border-radius: 999px;
-  background: var(--line);
-  transition: background 0.18s ease;
 }
 
-.theme-switch[aria-checked='true'] .theme-switch-track {
-  background: var(--accent);
+.theme-bulb:not(.on) .bulb-rays {
+  opacity: 0.25;
 }
 
-.theme-switch-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--bg-elevated);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
-  transition: transform 0.18s ease;
-}
-
-.theme-switch[aria-checked='true'] .theme-switch-thumb {
-  transform: translateX(16px);
-}
-
-.theme-switch-text {
-  min-width: 2em;
-  line-height: 1;
+.theme-bulb.on .bulb-rays {
+  opacity: 1;
 }
 
 .nav-toggle {
@@ -318,11 +367,24 @@ export default {
     display: flex;
   }
 
+  .nav-auth {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+  }
+
+  .auth-inline {
+    display: none;
+  }
+
   .header-actions {
     margin-left: 0;
-    width: 100%;
-    order: 11;
-    padding-bottom: 4px;
+    width: auto;
+    order: 0;
+    padding-bottom: 0;
   }
 }
 </style>

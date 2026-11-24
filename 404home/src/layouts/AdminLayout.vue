@@ -6,6 +6,7 @@
         <RouterLink to="/admin">概览</RouterLink>
         <RouterLink to="/admin/users">用户加额</RouterLink>
         <RouterLink to="/admin/chats">对话用量</RouterLink>
+        <RouterLink to="/admin/cs">客服工作台</RouterLink>
         <RouterLink to="/admin/tools">工具</RouterLink>
         <RouterLink to="/admin/categories">分类</RouterLink>
         <RouterLink to="/admin/posts">资讯/教程</RouterLink>

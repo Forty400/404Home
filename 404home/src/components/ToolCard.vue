@@ -6,7 +6,7 @@
         <div class="meta">
           <h3>
             {{ tool.name }}
-            <span v-if="tool.is_hot" class="badge badge-hot">热门</span>
+            <span v-if="showHotBadge && tool.is_hot" class="badge badge-hot">热门</span>
             <span v-if="tool.is_new" class="badge badge-new">新</span>
           </h3>
           <p>{{ tool.summary }}</p>
@@ -34,7 +34,8 @@ import { computed } from 'vue'
 export default {
   name: 'ToolCard',
   props: {
-    tool: { type: Object, required: true }
+    tool: { type: Object, required: true },
+    showHotBadge: { type: Boolean, default: true }
   },
   setup(props) {
     const initials = computed(() => {

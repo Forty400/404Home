@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node index.js",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "test": "node --test test/**/*.test.js",
+    "reindex:tools": "node scripts/reindex-tools.js",
+    "eval:recall": "node scripts/eval-recall-at-5.js"
   },
   "dependencies": {
     "@koa/cors": "^5.0.0",

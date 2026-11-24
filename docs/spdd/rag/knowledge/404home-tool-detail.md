@@ -1,10 +1,12 @@
 ---
 title: 工具详情页约定
 tags: [404home, frontend, tools, routing]
-updated: 2026-10-02
+updated: 2026-10-12
 ---
 
 # 工具详情页约定
+
+> 完整规范：`docs/spdd/1-资产规范/404home-tool-detail.md`
 
 ## 路由
 

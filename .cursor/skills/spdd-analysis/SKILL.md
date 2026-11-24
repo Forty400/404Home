@@ -15,7 +15,8 @@ description: >-
 2. Pull in relevant RAG knowledge and existing code only as needed.
 3. Fill a new file: `docs/spdd/analysis/YYYYMMDD-<slug>.md`.
 4. Mark open questions clearly; end with recommended canvas slug.
-5. Do **not** write production code in this skill.
+5. If trade-offs are already clear, note that generate 前应先落 `2-adr决策/`，再测试边界/条例与规范（SDD+TDD）。
+6. Do **not** write production code in this skill.
 
 ## Output
 

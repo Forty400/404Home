@@ -202,6 +202,51 @@ button, input, select, textarea {
   color: var(--ink-soft);
 }
 
+.skeleton-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.skeleton,
+.skeleton-line {
+  border-radius: 10px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--ink) 6%, var(--bg-elevated)) 0%,
+    color-mix(in srgb, var(--ink) 12%, var(--bg-elevated)) 50%,
+    color-mix(in srgb, var(--ink) 6%, var(--bg-elevated)) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.skeleton-card {
+  height: 112px;
+}
+
+.skeleton-detail {
+  height: 220px;
+  max-width: 720px;
+}
+
+.skeleton-line {
+  height: 14px;
+  border-radius: 6px;
+}
+
+.skeleton-line.w60 {
+  width: 60%;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
 @media (max-width: 768px) {
   .container {
     width: min(100% - 24px, 1180px);

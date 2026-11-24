@@ -18,6 +18,7 @@
       :aria-label="expanded ? '收起分类' : '展开更多分类'"
       @click="expanded = !expanded"
     >
+      <span class="cat-expand-text">{{ expanded ? '收起' : '更多' }}</span>
       <span class="cat-expand-icon" :class="{ open: expanded }" aria-hidden="true" />
     </button>
   </div>
@@ -91,7 +92,7 @@ export default {
   display: flex;
   align-items: flex-start;
   gap: 6px;
-  padding: 0 0 12px;
+  padding: 0 0 8px;
 }
 
 .cat-nav {
@@ -127,7 +128,6 @@ export default {
 
 .cat-expand {
   flex: 0 0 auto;
-  width: 32px;
   height: 32px;
   margin-top: 0;
   border: 1px solid var(--line);
@@ -138,7 +138,13 @@ export default {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  gap: 4px;
+  padding: 0 10px;
+  font-size: 0.78rem;
+}
+
+.cat-expand-text {
+  line-height: 1;
 }
 
 .cat-expand:hover {

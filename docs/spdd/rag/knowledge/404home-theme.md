@@ -1,16 +1,18 @@
 ---
 title: 404Home 主题色（亮/暗/系统）
 tags: [404home, frontend, theme, css]
-updated: 2026-10-09
+updated: 2026-10-12
 ---
 
 # 404Home 主题色
+
+> 完整规范：`docs/spdd/1-资产规范/404home-theme.md`
 
 ## 行为
 
 - 偏好三态：`system` | `light` | `dark`，**默认 `system`**（跟随 `prefers-color-scheme`）。
 - 解析结果写在 `html[data-theme="light|dark"]`；`system` 时监听 OS 变化并更新。
-- Header 提供亮/暗 **开关**（`role="switch"`）：按当前解析结果在 light↔dark 间切换；默认仍可为 `system`，首次拨动后写入显式偏好。
+- Header 提供 **电灯泡按钮**（`role="switch"`）：亮灯=亮色、灭灯=暗色；按当前解析结果在 light↔dark 间切换；默认仍可为 `system`，首次点击后写入显式偏好。
 - 持久化：`localStorage['404home-theme-pref']`（勿用已废弃的 `404home-theme`）。
 - 全站共用（含 `/admin`），无后端主题 API。
 - 分类顶栏（`CategoryNav`）：单行裁切、无横向滚动；溢出时右侧箭头展开为多行，再点收起。

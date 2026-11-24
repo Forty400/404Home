@@ -7,7 +7,15 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true })
 }
 
-const dbPath = path.join(dataDir, '404home.db')
+const dbPath = process.env.DB_PATH
+  ? path.resolve(process.env.DB_PATH)
+  : path.join(dataDir, '404home.db')
+
+const dbParent = path.dirname(dbPath)
+if (!fs.existsSync(dbParent)) {
+  fs.mkdirSync(dbParent, { recursive: true })
+}
+
 const db = new Database(dbPath)
 
 db.pragma('journal_mode = WAL')
@@ -41,6 +49,9 @@ function initSchema() {
       icon TEXT DEFAULT '',
       category_id INTEGER,
       tags TEXT NOT NULL DEFAULT '[]',
+      pricing TEXT NOT NULL DEFAULT '',
+      region_avail TEXT NOT NULL DEFAULT '',
+      scenario TEXT NOT NULL DEFAULT '',
       is_hot INTEGER NOT NULL DEFAULT 0,
       is_new INTEGER NOT NULL DEFAULT 0,
       enabled INTEGER NOT NULL DEFAULT 1,
@@ -56,6 +67,10 @@ function initSchema() {
       summary TEXT NOT NULL DEFAULT '',
       content TEXT NOT NULL DEFAULT '',
       cover TEXT DEFAULT '',
+      topic TEXT NOT NULL DEFAULT 'news',
+      source_name TEXT NOT NULL DEFAULT '',
+      source_url TEXT NOT NULL DEFAULT '',
+      is_hot INTEGER NOT NULL DEFAULT 0,
       published INTEGER NOT NULL DEFAULT 1,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -111,7 +126,115 @@ function initSchema() {
 
     CREATE INDEX IF NOT EXISTS idx_chat_sessions_user ON chat_sessions(user_id);
     CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON chat_messages(session_id);
+
+    CREATE TABLE IF NOT EXISTS cs_sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'bot' CHECK(status IN ('bot', 'queued', 'human', 'closed')),
+      assignee_admin_id INTEGER,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (assignee_admin_id) REFERENCES admins(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS cs_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id INTEGER NOT NULL,
+      role TEXT NOT NULL CHECK(role IN ('user', 'bot', 'agent', 'system')),
+      admin_id INTEGER,
+      content TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (session_id) REFERENCES cs_sessions(id) ON DELETE CASCADE,
+      FOREIGN KEY (admin_id) REFERENCES admins(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS cs_scripts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL DEFAULT '',
+      faq_label TEXT,
+      keywords TEXT NOT NULL DEFAULT '[]',
+      body TEXT NOT NULL DEFAULT '',
+      sort INTEGER NOT NULL DEFAULT 100,
+      enabled INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS cs_agent_presence (
+      admin_id INTEGER PRIMARY KEY,
+      online INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (admin_id) REFERENCES admins(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS cs_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL DEFAULT ''
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_cs_sessions_user ON cs_sessions(user_id);
+    CREATE INDEX IF NOT EXISTS idx_cs_sessions_status ON cs_sessions(status);
+    CREATE INDEX IF NOT EXISTS idx_cs_messages_session ON cs_messages(session_id);
+
+    CREATE TABLE IF NOT EXISTS page_views (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      path TEXT NOT NULL,
+      visitor_id TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_page_views_created ON page_views(created_at);
+    CREATE INDEX IF NOT EXISTS idx_page_views_path ON page_views(path);
+    CREATE INDEX IF NOT EXISTS idx_page_views_visitor ON page_views(visitor_id);
+
+    CREATE TABLE IF NOT EXISTS tool_chunks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      tool_id INTEGER NOT NULL,
+      field TEXT NOT NULL,
+      text TEXT NOT NULL DEFAULT '',
+      embedding_json TEXT NOT NULL DEFAULT '[]',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_tool_chunks_tool ON tool_chunks(tool_id);
+    CREATE INDEX IF NOT EXISTS idx_tool_chunks_field ON tool_chunks(field);
   `)
+  migratePostsSchema()
+  migrateToolsSchema()
+  seedCsDefaults()
+}
+
+function seedCsDefaults() {
+  const row = db.prepare('SELECT value FROM cs_settings WHERE key = ?').get('mode')
+  if (!row) {
+    const ins = db.prepare('INSERT INTO cs_settings (key, value) VALUES (?, ?)')
+    ins.run('mode', 'scripts')
+    ins.run('queue_message', '当前询问人数过多，正在排队')
+    ins.run('fallback_message', '暂未匹配到问题，请换个说法或转人工')
+  }
+}
+
+function migratePostsSchema() {
+  const cols = new Set(db.prepare('PRAGMA table_info(posts)').all().map((c) => c.name))
+  const add = (name, ddl) => {
+    if (!cols.has(name)) db.exec(`ALTER TABLE posts ADD COLUMN ${ddl}`)
+  }
+  add('topic', "topic TEXT NOT NULL DEFAULT 'news'")
+  add('source_name', "source_name TEXT NOT NULL DEFAULT ''")
+  add('source_url', "source_url TEXT NOT NULL DEFAULT ''")
+  add('is_hot', 'is_hot INTEGER NOT NULL DEFAULT 0')
+}
+
+function migrateToolsSchema() {
+  const cols = new Set(db.prepare('PRAGMA table_info(tools)').all().map((c) => c.name))
+  const add = (name, ddl) => {
+    if (!cols.has(name)) db.exec(`ALTER TABLE tools ADD COLUMN ${ddl}`)
+  }
+  add('pricing', "pricing TEXT NOT NULL DEFAULT ''")
+  add('region_avail', "region_avail TEXT NOT NULL DEFAULT ''")
+  add('scenario', "scenario TEXT NOT NULL DEFAULT ''")
 }
 
 function parseTool(row) {
@@ -119,6 +242,9 @@ function parseTool(row) {
   return {
     ...row,
     tags: safeJsonParse(row.tags, []),
+    pricing: row.pricing || '',
+    region_avail: row.region_avail || '',
+    scenario: row.scenario || '',
     is_hot: !!row.is_hot,
     is_new: !!row.is_new,
     enabled: !!row.enabled
@@ -129,7 +255,11 @@ function parsePost(row) {
   if (!row) return null
   return {
     ...row,
-    published: !!row.published
+    published: !!row.published,
+    is_hot: !!row.is_hot,
+    topic: row.topic || 'news',
+    source_name: row.source_name || '',
+    source_url: row.source_url || ''
   }
 }
 

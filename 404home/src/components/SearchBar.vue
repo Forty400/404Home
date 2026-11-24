@@ -3,10 +3,10 @@
     <input
       v-model="keyword"
       type="search"
-      placeholder="搜索 AI 工具，例如 PPT、配音、编程..."
+      placeholder="搜工具：PPT、配音、编程…"
       aria-label="搜索 AI 工具"
     />
-    <button class="btn btn-primary" type="submit">搜索</button>
+    <button class="btn btn-primary" type="submit">搜工具</button>
   </form>
 </template>
 
@@ -53,7 +53,7 @@ export default {
   flex: 1;
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 0.85rem 1.1rem;
+  padding: 0.7rem 1rem;
   background: var(--bg-elevated);
   color: var(--ink);
   box-shadow: var(--shadow);
