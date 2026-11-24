@@ -3,6 +3,7 @@
  * Usage: node ingest/run.js [--dry-run]
  * Never comments / issues / PRs / stars on source platforms.
  */
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') })
 const fs = require('fs')
 const path = require('path')
 const { assembleNewsDraft, assembleGithubDraft } = require('./assemble')
