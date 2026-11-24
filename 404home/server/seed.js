@@ -573,6 +573,12 @@ function collapseRepeatedBodyPads(content) {
   const pad = BODY_PAD.trim()
   if (!pad || !content) return content || ''
   let out = content
+  const padBare = pad.replace(/。+$/, '')
+  // stripPeriodFiller once ate the final 。 and re-appended a full pad
+  const broken = `${padBare}\n\n${pad}`
+  while (out.includes(broken)) {
+    out = out.split(broken).join(pad)
+  }
   const duplex = `${pad}\n\n${pad}`
   while (out.includes(duplex)) {
     out = out.split(duplex).join(pad)
@@ -585,10 +591,10 @@ function collapseRepeatedBodyPads(content) {
   return out
 }
 
-/** Strip old ≥280 period-filler tails (never pad with 。 again). */
+/** Collapse old ≥280 period-filler runs to one sentence stop (never pad with 。 again). */
 function stripPeriodFiller(content) {
   if (!content) return content || ''
-  return content.replace(/。{5,}/g, '')
+  return content.replace(/。{5,}/g, '。')
 }
 
 function thickenShortArticles(minLen = 280) {
@@ -596,7 +602,7 @@ function thickenShortArticles(minLen = 280) {
   const upd = db.prepare('UPDATE posts SET content = ? WHERE id = ?')
   let n = 0
   for (const r of rows) {
-    let content = stripPeriodFiller(collapseRepeatedBodyPads(r.content || ''))
+    let content = collapseRepeatedBodyPads(stripPeriodFiller(r.content || ''))
     if (content.length < minLen) {
       const pad = BODY_PAD.trim()
       if (pad && !content.includes(pad)) content += BODY_PAD
