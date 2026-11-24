@@ -23,7 +23,8 @@
         :src="post.cover"
         :alt="post.title"
       />
-      <div class="content">
+      <div v-if="htmlBody" class="content html-body" v-html="htmlBody" />
+      <div v-else class="content">
         <template v-for="(block, i) in bodyBlocks" :key="i">
           <h2 v-if="block.type === 'h2'">{{ block.text }}</h2>
           <p v-else>{{ block.text }}</p>
@@ -54,6 +55,7 @@ import { api } from '@/api'
 import { formatRelativeTime } from '@/utils/formatRelativeTime'
 import { parsePostBody } from '@/utils/parsePostBody'
 import { pickRelatedPosts } from '@/utils/pickRelatedPosts'
+import { looksLikeHtml, sanitizeHtml } from '@/utils/sanitizeHtml'
 
 const TOPIC_LABELS = {
   plugin: 'AI 插件',
@@ -79,6 +81,10 @@ export default {
     })
     const relativeTime = computed(() => formatRelativeTime(post.value?.created_at))
     const bodyBlocks = computed(() => parsePostBody(post.value?.content))
+    const htmlBody = computed(() => {
+      const c = post.value?.content || ''
+      return looksLikeHtml(c) ? sanitizeHtml(c) : ''
+    })
 
     function detailPath(p) {
       return p.type === 'tutorial' ? `/tutorials/${p.id}` : `/news/${p.id}`
@@ -117,6 +123,7 @@ export default {
       related,
       loading,
       loadError,
+      htmlBody,
       topicLabel,
       relativeTime,
       bodyBlocks,
@@ -178,6 +185,10 @@ time {
   font-family: var(--font-display);
   font-size: 1.2rem;
   line-height: 1.35;
+}
+.html-body :deep(img) {
+  max-width: 100%;
+  height: auto;
 }
 .content p {
   margin: 0 0 1em;

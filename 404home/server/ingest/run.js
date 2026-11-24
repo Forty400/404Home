@@ -7,6 +7,7 @@ require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }
 const fs = require('fs')
 const path = require('path')
 const { assembleNewsDraft, assembleGithubDraft } = require('./assemble')
+const { getControl, setStatus } = require('./control')
 
 const dryRun = process.argv.includes('--dry-run')
 const root = path.join(__dirname)
@@ -91,6 +92,18 @@ async function resolveAuth(apiBase) {
 }
 
 async function main() {
+  const control = getControl()
+  if (!dryRun && !control.enabled && process.env.INGEST_FORCE !== '1') {
+    console.log('[ingest] skip: disabled')
+    setStatus({
+      running: false,
+      phase: 'disabled',
+      message: 'ingest disabled',
+      lastFinishedAt: new Date().toISOString()
+    })
+    return
+  }
+
   const cfg = loadConfig()
   const dailyLimit = Number(cfg.dailyLimit) || 5
   const newsCap = Math.min(Number(cfg.newsLimit ?? cfg.newsMaxPerDay) || 3, dailyLimit)
@@ -99,12 +112,26 @@ async function main() {
   let posted = 0
   let newsPosted = 0
   let githubPosted = 0
+  const totalPlan = newsCap + githubCap
 
   console.log(
     `[ingest] config=${configPath} dryRun=${dryRun} dailyLimit=${dailyLimit} newsCap=${newsCap} githubCap=${githubCap}`
   )
 
+  if (!dryRun) {
+    setStatus({
+      running: true,
+      phase: 'auth',
+      current: 0,
+      total: totalPlan,
+      message: 'resolving auth',
+      lastError: '',
+      lastStartedAt: new Date().toISOString()
+    })
+  }
+
   const token = dryRun ? '' : await resolveAuth(apiBase)
+  if (!dryRun) setStatus({ phase: 'news', message: 'fetching news' })
 
   for (const feed of cfg.newsFeeds || []) {
     if (posted >= dailyLimit || newsPosted >= newsCap) break
@@ -140,6 +167,14 @@ async function main() {
         if (res.status >= 200 && res.status < 300) {
           posted += 1
           newsPosted += 1
+          if (!dryRun) {
+            setStatus({
+              phase: 'news',
+              current: posted,
+              total: totalPlan,
+              message: `news ${item.title}`.slice(0, 120)
+            })
+          }
           console.log(`[ingest] news ok ${res.data.id} ${item.title}`)
         } else {
           console.log(`[ingest] news fail ${res.status}`, res.data)
@@ -149,6 +184,8 @@ async function main() {
       console.log(`[ingest] news error ${feed.url}:`, e.message)
     }
   }
+
+  if (!dryRun) setStatus({ phase: 'github', message: 'fetching github' })
 
   for (const gq of cfg.githubQueries || []) {
     if (posted >= dailyLimit || githubPosted >= githubCap) break
@@ -194,6 +231,14 @@ async function main() {
         if (postedRes.status >= 200 && postedRes.status < 300) {
           posted += 1
           githubPosted += 1
+          if (!dryRun) {
+            setStatus({
+              phase: 'github',
+              current: posted,
+              total: totalPlan,
+              message: `github ${repo.full_name}`.slice(0, 120)
+            })
+          }
           console.log(`[ingest] github ok ${postedRes.data.id} ${repo.full_name}`)
         }
       }
@@ -203,9 +248,33 @@ async function main() {
   }
 
   console.log(`[ingest] done posted=${posted} news=${newsPosted} github=${githubPosted}`)
+  if (!dryRun) {
+    setStatus({
+      running: false,
+      phase: 'done',
+      current: posted,
+      total: totalPlan,
+      message: 'finished',
+      lastPosted: posted,
+      lastNews: newsPosted,
+      lastGithub: githubPosted,
+      lastFinishedAt: new Date().toISOString()
+    })
+  }
 }
 
 main().catch((e) => {
   console.error(e)
+  try {
+    setStatus({
+      running: false,
+      phase: 'error',
+      message: 'failed',
+      lastError: String(e && e.message ? e.message : e).slice(0, 500),
+      lastFinishedAt: new Date().toISOString()
+    })
+  } catch {
+    /* ignore */
+  }
   process.exit(1)
 })

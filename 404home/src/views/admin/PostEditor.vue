@@ -2,7 +2,7 @@
   <div>
     <div class="head">
       <h1>{{ form.id ? '编辑稿件' : '手写发文' }}</h1>
-      <p class="hint">正文纯文本；用单独一行 <code>## 标题</code> 分段。可另存草稿或发布。</p>
+      <p class="hint">源码可含 HTML；预览模式会消毒后渲染（去 script/事件）。也可用 <code>## 标题</code> 纯文本分段。</p>
     </div>
     <form class="card-panel form" @submit.prevent="saveDraft">
       <div class="field">
@@ -30,8 +30,29 @@
         <input v-model="form.summary" />
       </div>
       <div class="field">
-        <label>正文</label>
-        <textarea v-model="form.content" class="long" rows="16" />
+        <div class="body-head">
+          <label>正文</label>
+          <div class="tabs" role="tablist">
+            <button
+              class="tab"
+              type="button"
+              :class="{ on: mode === 'source' }"
+              @click="mode = 'source'"
+            >
+              源码
+            </button>
+            <button
+              class="tab"
+              type="button"
+              :class="{ on: mode === 'preview' }"
+              @click="mode = 'preview'"
+            >
+              预览
+            </button>
+          </div>
+        </div>
+        <textarea v-if="mode === 'source'" v-model="form.content" class="long" rows="16" />
+        <div v-else class="preview" v-html="previewHtml" />
       </div>
       <div class="field">
         <label>封面 URL</label>
@@ -66,9 +87,11 @@
 </template>
 
 <script>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '@/api'
+import { looksLikeHtml, sanitizeHtml } from '@/utils/sanitizeHtml'
+import { parsePostBody } from '@/utils/parsePostBody'
 
 function emptyForm() {
   return {
@@ -86,6 +109,13 @@ function emptyForm() {
   }
 }
 
+function escapeText(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
 export default {
   name: 'AdminPostEditor',
   setup() {
@@ -93,6 +123,18 @@ export default {
     const form = reactive(emptyForm())
     const error = ref('')
     const ok = ref('')
+    const mode = ref('source')
+
+    const previewHtml = computed(() => {
+      const raw = form.content || ''
+      if (looksLikeHtml(raw)) return sanitizeHtml(raw)
+      const blocks = parsePostBody(raw)
+      return blocks
+        .map((b) =>
+          b.type === 'h2' ? `<h2>${escapeText(b.text)}</h2>` : `<p>${escapeText(b.text)}</p>`
+        )
+        .join('\n')
+    })
 
     async function load() {
       const id = Number(route.query.id)
@@ -116,6 +158,7 @@ export default {
         is_hot: !!post.is_hot,
         lifecycle: post.lifecycle || 'draft'
       })
+      if (looksLikeHtml(post.content || '')) mode.value = 'preview'
     }
 
     async function saveDraft() {
@@ -160,7 +203,7 @@ export default {
     }
 
     onMounted(load)
-    return { form, error, ok, saveDraft, publish, archive }
+    return { form, error, ok, mode, previewHtml, saveDraft, publish, archive }
   }
 }
 </script>
@@ -171,7 +214,29 @@ h1 { margin: 0 0 6px; font-family: var(--font-display); }
 .hint { margin: 0; color: var(--ink-soft); font-size: 0.9rem; }
 .form { padding: 22px; display: grid; gap: 12px; max-width: 820px; }
 .field { display: grid; gap: 6px; }
+.body-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.tabs { display: flex; gap: 6px; }
+.tab {
+  border: 1px solid var(--line, #d0d7de);
+  background: transparent;
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.tab.on { background: var(--panel-2, #eef2f7); font-weight: 600; }
 .long { min-height: 280px; font-family: ui-monospace, monospace; }
+.preview {
+  min-height: 280px;
+  border: 1px solid var(--line, #d0d7de);
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: #fff;
+  overflow: auto;
+  line-height: 1.65;
+}
+.preview :deep(img) { max-width: 100%; height: auto; }
+.preview :deep(h2) { margin: 0.8em 0 0.4em; font-size: 1.15rem; }
+.preview :deep(p) { margin: 0 0 0.75em; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .check { display: flex; align-items: center; gap: 8px; }
 .meta { color: var(--ink-soft); margin: 0; }

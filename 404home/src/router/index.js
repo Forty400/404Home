@@ -120,6 +120,11 @@ const routes = [
         name: 'admin-posts-trash',
         component: () => import('@/views/admin/PostTrash.vue')
       },
+      {
+        path: 'ingest',
+        name: 'admin-ingest',
+        component: () => import('@/views/admin/IngestMonitor.vue')
+      },
       { path: 'users', name: 'admin-users', component: () => import('@/views/admin/Users.vue') },
       { path: 'chats', name: 'admin-chats', component: () => import('@/views/admin/Chats.vue') },
       { path: 'cs', name: 'admin-cs', component: () => import('@/views/admin/CsWorkbench.vue') }

@@ -2,7 +2,7 @@
   <div class="login-page">
     <form class="card-panel form" @submit.prevent="submit">
       <h1>管理登录</h1>
-      <p class="hint">默认账号见 server/.env（开发环境：admin / admin123）</p>
+      <p class="hint">请使用管理员账号登录</p>
       <div class="field">
         <label>用户名</label>
         <input v-model="username" autocomplete="username" required />
@@ -31,7 +31,7 @@ export default {
   setup() {
     const router = useRouter()
     const route = useRoute()
-    const username = ref('admin')
+    const username = ref('')
     const password = ref('')
     const error = ref('')
     const loading = ref(false)

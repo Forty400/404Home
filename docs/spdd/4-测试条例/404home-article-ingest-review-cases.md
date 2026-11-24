@@ -57,9 +57,38 @@
 - **When**: 扫描
 - **Then**: 不出现对外部目标的 comment/issue/pr/star 写路径（允许本站 `/api/posts`）
 
+### TC-08 · INGEST_TOKEN 可入库
+
+- Priority: P0
+- **Given**: `INGEST_TOKEN` 已配置
+- **When**: `POST /api/posts` 带 `X-Ingest-Token`、`lifecycle=pending_review`
+- **Then**: 200 且入库为待审
+
+### TC-09 · Admin 登录无明文口令
+
+- Priority: P0
+- **Given**: `AdminLogin.vue` 源码
+- **When**: 扫描
+- **Then**: 不含 `admin123` 及「默认账号…admin」类明文提示
+
+### TC-10 · sanitizeHtml 去掉脚本
+
+- Priority: P0
+- **Given**: 含 `<script>` / `onclick=` 的 HTML
+- **When**: `sanitizeHtml`
+- **Then**: 输出不含 script 与 on* 处理器
+
+### TC-11 · ingest control 启停与设置
+
+- Priority: P0
+- **Given**: admin
+- **When**: `PUT /api/ingest/settings` 改 `enabled=false`、`dailyLimit`
+- **Then**: `GET /api/ingest/status` 反映；`enabled=false` 时 `POST /api/ingest/run` 拒绝（或返回 skipped）
+
 ## Traceability
 
 | Case | ADR |
 | --- | --- |
 | TC-01～06 | ADR-20261125 |
-| TC-07 | 静默采集 |
+| TC-07～08 | 静默采集 / token |
+| TC-09～11 | 2026-11-25b 监控与预览 |

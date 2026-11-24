@@ -13,6 +13,7 @@ const statsRoutes = require('./routes/stats')
 const csRoutes = require('./routes/cs')
 const analyticsRoutes = require('./routes/analytics')
 const smartSearchRoutes = require('./routes/smartSearch')
+const ingestRoutes = require('./routes/ingest')
 
 function createApp() {
   const app = new Koa()
@@ -41,6 +42,7 @@ function createApp() {
   app.use(csRoutes.routes()).use(csRoutes.allowedMethods())
   app.use(analyticsRoutes.routes()).use(analyticsRoutes.allowedMethods())
   app.use(smartSearchRoutes.routes()).use(smartSearchRoutes.allowedMethods())
+  app.use(ingestRoutes.routes()).use(ingestRoutes.allowedMethods())
 
   app.use(async (ctx) => {
     if (ctx.path === '/api/health') {

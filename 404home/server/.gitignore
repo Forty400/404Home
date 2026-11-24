@@ -3,3 +3,5 @@ data/
 .env
 *.db
 *.db-*
+ingest/control.json
+ingest/status.json

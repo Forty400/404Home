@@ -20,6 +20,9 @@
 - approve → draft；publish → published；archive → archived；restore → draft；fork 副本；DELETE
 - ingest 创建 `pending_review`；积压 ≥20 拒绝
 - `source_url` 去重（同 URL 再 ingest 不重复插入）
+- Admin 登录无明文默认口令文案
+- `sanitizeHtml` 预览消毒（去 script/on*）
+- ingest control：status / settings / run / enabled
 
 ## 3. Out of scope
 

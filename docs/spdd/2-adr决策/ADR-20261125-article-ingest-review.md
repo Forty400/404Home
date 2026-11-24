@@ -18,8 +18,9 @@
 3. **另存副本**：fork 新行 `draft`，原待审保留。
 4. **静默采集**：只读拉公开内容；禁止对源站写操作（评论/Issue/PR/Star 等）；规则拼装或不调模型原文迁移。
 5. **配额与闸门**：约 5 篇/天；`pending_review` ≥ **20** 时拒绝入库/更新（`pending_backlog_full`）。
-6. **Admin**：待审 / 写稿（纯文本+`##` 标题，沿用 `parsePostBody`）/ 回收站 三入口。
+6. **Admin**：待审 / 写稿（源码 + **HTML 消毒预览**）/ 回收站；**采集监控页**（启停、立即跑、周期、日配额、进度）。
 7. **公共 API**：访客列表与详情只返回 `lifecycle=published`。
+8. **修订 2026-11-25b**：Admin 登录页**不得**展示默认明文账号密码；采集控制面经 admin API 改 `ingest/config.json` + `ingest/control.json`，进度写 `ingest/status.json`；鉴权用 `INGEST_TOKEN` / 每次 admin 登录，不依赖易过期 JWT。
 
 ## Consequences
 

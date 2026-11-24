@@ -13,6 +13,7 @@
         <RouterLink to="/admin/posts/review">待审稿件</RouterLink>
         <RouterLink to="/admin/posts/editor">手写发文</RouterLink>
         <RouterLink to="/admin/posts/trash">回收站</RouterLink>
+        <RouterLink to="/admin/ingest">采集监控</RouterLink>
       </nav>
       <button class="btn btn-ghost" type="button" @click="logout">退出登录</button>
     </aside>

@@ -104,6 +104,12 @@ export const api = {
   restorePost: (id) => request(`/posts/${id}/restore`, { method: 'POST', body: {} }),
   forkPost: (id) => request(`/posts/${id}/fork`, { method: 'POST', body: {} }),
 
+  ingestStatus: () => request('/ingest/status'),
+  ingestSettings: (body) => request('/ingest/settings', { method: 'PUT', body }),
+  ingestEnable: () => request('/ingest/enable', { method: 'POST', body: {} }),
+  ingestDisable: () => request('/ingest/disable', { method: 'POST', body: {} }),
+  ingestRun: (body = {}) => request('/ingest/run', { method: 'POST', body }),
+
   login: (body) => request('/auth/login', { method: 'POST', body }),
   me: () => request('/auth/me'),
   getStats: () => request('/stats'),

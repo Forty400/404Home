@@ -192,4 +192,32 @@ describe('article ingest review P0', () => {
     assert.equal(r.status, 200)
     assert.equal(data.lifecycle, 'pending_review')
   })
+
+  it('TC-09: AdminLogin has no plaintext default password hint', () => {
+    const src = fs.readFileSync(
+      path.join(__dirname, '..', '..', 'src', 'views', 'admin', 'Login.vue'),
+      'utf8'
+    )
+    assert.ok(!/admin123/.test(src))
+    assert.ok(!/默认账号见/.test(src))
+  })
+
+  it('TC-11: ingest settings enable/disable and reject run when disabled', async () => {
+    const token = adminJwt()
+    let res = await api.request('PUT', '/api/ingest/settings', {
+      token,
+      body: { enabled: false, dailyLimit: 4, newsLimit: 2, githubLimit: 1 }
+    })
+    assert.equal(res.status, 200)
+    assert.equal(res.data.enabled, false)
+    assert.equal(res.data.dailyLimit, 4)
+
+    res = await api.request('POST', '/api/ingest/run', { token, body: {} })
+    assert.equal(res.status, 409)
+    assert.equal(res.data.code, 'ingest_disabled')
+
+    res = await api.request('POST', '/api/ingest/enable', { token, body: {} })
+    assert.equal(res.status, 200)
+    assert.equal(res.data.enabled, true)
+  })
 })
