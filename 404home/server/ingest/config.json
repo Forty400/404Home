@@ -1,7 +1,7 @@
 {
-  "dailyLimit": 5,
-  "newsLimit": 3,
-  "githubLimit": 2,
+  "dailyLimit": 4,
+  "newsLimit": 2,
+  "githubLimit": 1,
   "pendingLimit": 20,
   "newsFeeds": [
     {
